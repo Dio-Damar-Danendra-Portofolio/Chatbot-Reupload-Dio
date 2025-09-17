@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   newChatBtn.addEventListener('click', () => {
     currentChatId = null;
-    messagesEl.innerHTML = '<div class="text-muted" data-i18n="new_chat_started">New chat started...</div>';
+    messagesEl.innerHTML = '<div class="text-muted"><span data-i18n="new_chat_started">New chat started...</span></div>';
   });
 
   loadChatList();
