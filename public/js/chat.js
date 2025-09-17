@@ -72,14 +72,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!res) return;
 
     const data = await res.json();
-    const last = messagesEl.querySelector('.msg.assistant:last-child');
+    const last = messagesEl.querySelector('.msg.model:last-child');
     if (last && last.textContent === '...') last.remove();
     if (data.reply) {
       currentChatId = data.chat_id;
-      appendMessage(data.reply, 'assistant');
+      appendMessage(data.reply, 'model');
       loadChatList();
     } else {
-      appendMessage('Error', 'assistant');
+      appendMessage('Error', 'model');
     }
   });
 
