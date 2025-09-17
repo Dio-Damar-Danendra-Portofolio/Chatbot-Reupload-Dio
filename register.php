@@ -23,26 +23,34 @@ require_once __DIR__ . '/logic_and_design/user_register.php';
     <?php endif; ?>
 
     <form method="post">
-      <div class="mb-3">
-        <label class="form-label" data-i18n="username_label">Username</label>
-        <input name="username" class="form-control" required>
+      <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+              <label class="form-label" data-i18n="username_label">Username</label>
+              <input name="username" class="form-control" required>
+            </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+              <label class="form-label" data-i18n="email_label">Email</label>
+              <input name="email" type="email" class="form-control" required>
+          </div>
+        </div>
       </div>
-
-      <div class="mb-3">
-        <label class="form-label" data-i18n="email_label">Email</label>
-        <input name="email" type="email" class="form-control" required>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label" data-i18n="password_label">Password</label>
+            <input name="password" type="password" class="form-control" required>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label" data-i18n="phone_number">Phone Number</label>
+            <input name="phone_number" type="phone_number" class="form-control" required>
+          </div>
+        </div>
       </div>
-
-      <div class="mb-3">
-        <label class="form-label" data-i18n="password_label">Password</label>
-        <input name="password" type="password" class="form-control" required>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label" data-i18n="phone_number">Phone Number</label>
-        <input name="phone_number" type="phone_number" class="form-control" required>
-      </div>
-
       <button type="submit" class="btn btn-primary w-100" data-i18n="sign_up">Sign Up</button>
     </form>
     <div class="mt-3 text-center">
