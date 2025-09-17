@@ -10,7 +10,6 @@ session_start();
 
 set_exception_handler(function($e) {
   header('Content-Type: application/json; charset=utf-8');
-  // log incoming request for debugging
   file_put_contents(__DIR__.'/gemini_debug.log', date('c')." incoming: ".file_get_contents('php://input')."\n", FILE_APPEND);
   http_response_code(500);
   echo json_encode(['error' => 'Internal error']);
@@ -33,7 +32,7 @@ $config = [
   'db_name' => $_ENV['DB_NAME'] ?? 'chatbot',
   'db_user' => $_ENV['DB_USER'] ?? 'root',
   'db_pass' => $_ENV['DB_PASS'] ?? '',
-  'gemini_api_key' => $_ENV['GEMINI_API_KEY'] ?? 'AIzaSyBmXH0TsRUDnS6kBR7tXU3lOB4WvraDOLA',
+  'gemini_api_key' => $_ENV['GEMINI_API_KEY'] ?? '',
   'gemini_endpoint' => 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent'
 ];
 
@@ -80,39 +79,42 @@ function log_gemini_error($context) {
 
 // ================= GEMINI API =================
 function call_gemini($config, $messages) {
-    $apiKey = $config['gemini_api_key'];
-    $endpoint = $config['gemini_endpoint'] . '?key=' . urlencode($apiKey);
+  $apiKey = $config['gemini_api_key'];
+  $endpoint = $config['gemini_endpoint'] . '?key=' . urlencode($apiKey);
 
-    $contents = array_map(function($m) {
-        return [
-            'role' => $m['role'],            // <-- tambahkan role
-            'parts' => [['text' => $m['content']]]
-        ];
-    }, $messages);
+  // 🟢 FIX: hanya kirim role user, tanpa system/model
+  $contents = array_map(function($m) {
+    return [
+      'role' => 'user',
+      'parts' => [['text' => $m['content']]]
+    ];
+  }, $messages);
 
-    $body = json_encode(['contents' => $contents]);
+  $body = json_encode(['contents' => $contents]);
 
-    $ch = curl_init($endpoint);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    $resp = curl_exec($ch);
-    $err = curl_error($ch);
-    $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+  $ch = curl_init($endpoint);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  curl_setopt($ch, CURLOPT_POST, true);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+  curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+  $resp = curl_exec($ch);
+  $err = curl_error($ch);
+  $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  curl_close($ch);
 
-    if ($err) {
-        log_gemini_error(['curl_error' => $err, 'http_code' => $http, 'request_body' => $body]);
-        return ['error'=>$err];
-    }
+  if ($err) {
+    log_gemini_error(['curl_error' => $err, 'http_code' => $http, 'request_body' => $body]);
+    return ['error'=>$err];
+  }
 
-    $decoded = json_decode($resp, true);
-    if (isset($decoded['error'])) {
-        log_gemini_error(['http_code'=>$http,'request_body'=>$body,'response_body'=>$resp]);
-    }
-    return $decoded;
+  $decoded = json_decode($resp, true);
+  if (isset($decoded['error'])) {
+    log_gemini_error(['http_code'=>$http,'request_body'=>$body,'response_body'=>$resp]);
+  }
+  return $decoded;
 }
+
+// ================= ROUTES =================
 
 // GET /backend/backend.php?list_chats=1
 if ($_SERVER['REQUEST_METHOD']==='GET' && isset($_GET['list_chats'])) {
@@ -135,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD']==='GET' && isset($_GET['get_chat'])) {
   exit;
 }
 
-
+// POST /backend/backend.php?chat=1
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['chat'])) {
   header('Content-Type: application/json');
   require_auth();
@@ -151,23 +153,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['chat'])) {
   $userMessage = $input['message'];
   $chatId = $input['chat_id'] ?? null;
 
-  // Jika tidak ada chat_id (pertama kali kirim pesan)
   if (empty($chatId)) {
-      $title = mb_substr($userMessage, 0, 30);
-      if (mb_strlen($userMessage) > 30) $title .= '...';
-
-      $stmt = $pdo->prepare('INSERT INTO chats (user_id, title) VALUES (:uid, :title)');
-      $stmt->execute([':uid'=>$userId, ':title'=>$title]);
-      $chatId = $pdo->lastInsertId();
+    $title = mb_substr($userMessage, 0, 30);
+    if (mb_strlen($userMessage) > 30) $title .= '...';
+    $stmt = $pdo->prepare('INSERT INTO chats (user_id, title) VALUES (:uid, :title)');
+    $stmt->execute([':uid'=>$userId, ':title'=>$title]);
+    $chatId = $pdo->lastInsertId();
   }
 
-  // Simpan pesan user
   $stmt = $pdo->prepare('INSERT INTO messages (user_id, chat_id, role, message) VALUES (:uid, :cid, "user", :msg)');
   $stmt->execute([':uid'=>$userId, ':cid'=>$chatId, ':msg'=>$userMessage]);
 
+  // 🟢 FIX: hanya kirim user message ke Gemini
   $messages = [
-    ['role'=>'model','content'=>"You are a helpful chatbot."],
-    ['role'=>'user','content'=>$userMessage]
+    ['content' => $userMessage]
   ];
   $resp = call_gemini($config, $messages);
 

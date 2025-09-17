@@ -73,31 +73,22 @@
     messagesEl.innerHTML = '<div class="text-muted">New chat started...</div>';
   });
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const text = input.value.trim();
-    if (!text) return;
-    appendMessage(text,'user');
-    input.value='';
-    appendMessage('...','assistant');
-
-    const res = await fetch('backend/backend.php?chat=1', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({message:text, chat_id:currentChatId}),
-      credentials:'include'
-    });
-    const data = await res.json();
-    const last = messagesEl.querySelector('.msg.assistant:last-child');
-    if (last && last.textContent==='...') last.remove();
-    if (data.reply) {
-      currentChatId = data.chat_id; // simpan id chat dari server
-      appendMessage(data.reply,'assistant');
-      loadChatList(); // refresh daftar chat
-    } else {
-      appendMessage('Error','assistant');
-    }
+  const res = await fetch('backend/backend.php?chat=1', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({message:text, chat_id:currentChatId}),
+    credentials:'include'
   });
+
+  // 🟢 Tambahan baru untuk deteksi session expired
+  if (res.status === 401) {
+    alert('Session expired. Please login again.');
+    location.href = 'login.php';
+    return;
+  }
+
+  const data = await res.json();
+
 
   loadChatList();
   // ===================== ☝️ AKHIR FITUR DAFTAR CHAT ☝️ =====================
