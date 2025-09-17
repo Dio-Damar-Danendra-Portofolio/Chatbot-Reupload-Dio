@@ -32,6 +32,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!key) return;
       if (translations[key]) el.setAttribute('placeholder', translations[key]);
     });
+
+    // title replacements
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      const key = el.getAttribute('data-i18n-title');
+      if (!key) return;
+      if (translations[key]) el.setAttribute('title', translations[key]);
+    });
+
   }
 
   // initialize

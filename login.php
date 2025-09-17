@@ -37,7 +37,7 @@ require_once __DIR__ . '/logic_and_design/user_login.php';
     </form>
     <div class="mt-3 text-center">
       <select id="localeSelect" class="form-select w-auto mx-auto" title="Select Language" data-i18n-title="select_language">
-        <option value="" data-i18n="select_language">-</option>
+        <option value="" data-i18n="select_language">Select Language</option>
         <option value="en">English</option>
         <option value="id">Bahasa Indonesia</option>
       </select>

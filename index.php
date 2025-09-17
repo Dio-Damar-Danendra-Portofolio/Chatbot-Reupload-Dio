@@ -11,7 +11,7 @@ require_once __DIR__ . '/backend/backend.php';
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
   <script src="public/js/chat.js" defer></script>
   <script>
-document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", () => {
   const localeSelect = document.getElementById("localeSelect");
   const stored = localStorage.getItem("locale");
   const defaultLocale = stored || "en";
