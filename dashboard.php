@@ -85,8 +85,8 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="navbar-brand mb-0 h6" data-i18n="user">Current Chatbot User: </span>
             <strong id="username" class="navbar-brand mb-0 h6"><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
           <div class="m-3 text-center">
-            <select id="localeSelect" class="form-select w-auto mx-auto" title="Select Language">
-              <option value="" data-i18n="select_language">-</option>
+            <select id="localeSelect" class="form-select w-auto mx-auto" title="Select Language" data-i18n-title="select_language">
+              <option value="" data-i18n="select_language">Select Language</option>
               <option value="en">English</option>
               <option value="id">Bahasa Indonesia</option>
             </select>
