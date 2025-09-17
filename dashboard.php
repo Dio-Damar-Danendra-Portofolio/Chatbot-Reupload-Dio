@@ -9,6 +9,56 @@ check_login();
   <title>Chatbot</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <?php include "logic_and_design/script_and_link.php"; ?>
+    <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const localeSelect = document.getElementById("localeSelect");
+  const stored = localStorage.getItem("locale");
+  const defaultLocale = stored || "en";
+
+  async function loadTranslations(locale) {
+    const url = (location.pathname.includes('/public/') ? 'locales/' : 'public/locales/') + locale + '.json';
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to load ' + url);
+      const json = await res.json();
+      return json;
+    } catch (err) {
+      console.error('i18n load error', err);
+      return {};
+    }
+  }
+
+  async function applyTranslations(locale) {
+    const translations = await loadTranslations(locale);
+    // text replacements
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (!key) return;
+      if (translations[key]) el.textContent = translations[key];
+    });
+    // placeholder replacements
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (!key) return;
+      if (translations[key]) el.setAttribute('placeholder', translations[key]);
+    });
+  }
+
+  // initialize
+  if (localeSelect) {
+    localeSelect.value = defaultLocale;
+    applyTranslations(defaultLocale);
+    localeSelect.addEventListener('change', () => {
+      const val = localeSelect.value;
+      localStorage.setItem('locale', val);
+      applyTranslations(val);
+    });
+  } else {
+    // still try to apply for pages without select (login/register maybe)
+    applyTranslations(defaultLocale);
+  }
+});
+  </script>
 </head>
 <body class="bg-light">
 <div class="container-fluid">
@@ -29,13 +79,12 @@ check_login();
           <span class="navbar-brand mb-0 h6" data-i18n="user">Current Chatbot User: </span>
             <strong id="username" class="navbar-brand mb-0 h6"><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
           <div class="m-3 text-center">
-            <label for="localeSelect" class="form-label" data-i18n="language">Language</label>
             <select id="localeSelect" class="form-select w-auto mx-auto">
               <option value="en">English</option>
               <option value="id">Bahasa Indonesia</option>
             </select>
           </div>
-          <form action="logout.php" method="post" class="mb-0 mt-4">
+          <form action="logout.php" method="post" class="mb-0">
             <button class="btn btn-danger" data-i18n="logout">Logout</button>
           </form>
         </div>
