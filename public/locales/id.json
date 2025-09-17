@@ -30,5 +30,6 @@
   "new_chat_started" : "Obrolan Baru dimulai...", 
   "select_language": "-", 
   "phone_number":"Nomor Ponsel", 
-  "my_chats": "Obrolan Saya"
+  "my_chats": "Obrolan Saya", 
+  "type_your_message": "Ketik pesan Anda..."
 }

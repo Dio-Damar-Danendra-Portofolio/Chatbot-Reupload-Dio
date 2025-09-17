@@ -98,7 +98,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="text-muted" data-i18n="select_chat">Select a chat or start a new one...</div>
           </div>
           <form id="chatForm" class="d-flex gap-2">
-            <input type="text" id="inputMsg" class="form-control" placeholder="Type your message..." required>
+          <input type="text" 
+                id="inputMsg" 
+                class="form-control" 
+                placeholder="Type your message..." 
+                data-i18n-placeholder="type_your_message"
+                required>
             <button class="btn btn-primary" data-i18n="send">Send</button>
           </form>
         </div>

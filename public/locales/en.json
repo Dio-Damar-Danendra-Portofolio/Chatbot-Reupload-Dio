@@ -30,5 +30,6 @@
   "new_chat_started" : "New chat started...", 
   "select_language": "-", 
   "phone_number": "Phone Number", 
-  "my_chats": "My Chats"
+  "my_chats": "My Chats",
+  "type_your_message": "Type your message..."
 }
