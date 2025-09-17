@@ -38,11 +38,16 @@ require_once __DIR__ . '/logic_and_design/user_register.php';
         <input name="password" type="password" class="form-control" required>
       </div>
 
+      <div class="mb-3">
+        <label class="form-label" data-i18n="phone_number">Phone Number</label>
+        <input name="phone_number" type="phone_number" class="form-control" required>
+      </div>
+
       <button type="submit" class="btn btn-primary w-100" data-i18n="sign_up">Sign Up</button>
     </form>
     <div class="mt-3 text-center">
-    <label for="localeSelect" class="form-label" data-i18n="language">🌐 Language</label>
     <select id="localeSelect" class="form-select w-auto mx-auto">
+      <option value="" data-i18n="select_language">-</option>
       <option value="en">English</option>
       <option value="id">Bahasa Indonesia</option>
     </select>

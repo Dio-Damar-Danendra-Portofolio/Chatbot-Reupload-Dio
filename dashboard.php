@@ -80,6 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <strong id="username" class="navbar-brand mb-0 h6"><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
           <div class="m-3 text-center">
             <select id="localeSelect" class="form-select w-auto mx-auto">
+                      <option value="" data-i18n="select_language">-</option>
               <option value="en">English</option>
               <option value="id">Bahasa Indonesia</option>
             </select>

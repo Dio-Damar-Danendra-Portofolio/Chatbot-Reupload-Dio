@@ -27,5 +27,6 @@
   "signup_link": "Daftar", 
   "new_chat": "+ Obrolan Baru",
   "select_chat": "Pilih obrolan atau mulai obrolan baru", 
-  "new_chat_started" : "Obrolan Baru dimulai..."
+  "new_chat_started" : "Obrolan Baru dimulai...", 
+  "select_language": "-"
 }
