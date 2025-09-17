@@ -26,5 +26,6 @@
   "question_account_login": "Don't have an account?", 
   "signup_link": "Sign up", 
   "new_chat": "+ New Chat", 
-  "select_chat": "Select a chat or start a new one..."
+  "select_chat": "Select a chat or start a new one...", 
+  "new_chat_started" : "New chat started..."
 }

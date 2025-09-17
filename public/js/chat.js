@@ -1,96 +1,92 @@
-(async () => {
-  const messagesEl = document.getElementById('messages');
+document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('chatForm');
   const input = document.getElementById('inputMsg');
-  const localeSelect = document.getElementById('localeSelect');
+  const messagesEl = document.getElementById('messages');
+  const chatListEl = document.getElementById('chatList');
+  const newChatBtn = document.getElementById('newChatBtn');
+  let currentChatId = null;
 
-  const locales = {};
-
-  async function loadLocale(code) {
-    if (!locales[code]) {
-      const res = await fetch(`/public/locales/${code}.json`);
-      locales[code] = await res.json();
-    }
-    return locales[code];
-  }
-
-  async function applyTranslations(code) {
-    const dict = await loadLocale(code);
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-      const key = el.getAttribute('data-i18n');
-      if (dict[key]) el.textContent = dict[key];
-    });
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-      const key = el.getAttribute('data-i18n-placeholder');
-      if (dict[key]) el.setAttribute('placeholder', dict[key]);
-    });
-  }
-
-  if (localeSelect) {
-    localeSelect.addEventListener('change', () => {
-      applyTranslations(localeSelect.value);
-    });
-    applyTranslations(localeSelect.value);
-  }
-
-  if (!messagesEl || !form || !input) return;
-
-  function appendMessage(text, who = 'model') {
+  // Tambahkan pesan ke area tampilan
+  function appendMessage(text, role) {
     const div = document.createElement('div');
-    div.className = 'msg ' + (who === 'user' ? 'user' : 'model');
+    div.className = 'msg ' + role;
     div.textContent = text;
     messagesEl.appendChild(div);
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
-  // ===================== 👇 TAMBAHKAN FITUR DAFTAR CHAT DI SINI 👇 =====================
-  let currentChatId = null;
+  // 🛡️ Fungsi fetch dengan penanganan session expired
+  async function safeFetch(url, options = {}) {
+    const res = await fetch(url, {
+      credentials: 'include',
+      ...options
+    });
+    if (res.status === 401) {
+      alert('Session expired. Please login again.');
+      location.href = 'login.php';
+      return null;
+    }
+    return res;
+  }
 
+  // Ambil daftar chat
   async function loadChatList() {
-    const res = await fetch('backend/backend.php?list_chats=1', {credentials:'include'});
+    const res = await safeFetch('backend/backend.php?list_chats=1');
+    if (!res) return;
     const chats = await res.json();
-    const list = document.getElementById('chatList');
-    list.innerHTML = '';
+    chatListEl.innerHTML = '';
     chats.forEach(c => {
       const li = document.createElement('li');
       li.className = 'list-group-item list-group-item-action';
       li.textContent = c.title;
       li.onclick = () => loadChat(c.id);
-      list.appendChild(li);
+      chatListEl.appendChild(li);
     });
   }
 
-  async function loadChat(chatId) {
-    currentChatId = chatId;
-    const res = await fetch('backend/backend.php?get_chat='+chatId, {credentials:'include'});
+  // Ambil isi chat tertentu
+  async function loadChat(id) {
+    currentChatId = id;
+    const res = await safeFetch('backend/backend.php?get_chat=' + id);
+    if (!res) return;
     const msgs = await res.json();
     messagesEl.innerHTML = '';
-    msgs.forEach(m => appendMessage(m.message, m.role));
+    msgs.forEach(m => appendMessage(m.message, m.role === 'user' ? 'user' : 'assistant'));
   }
 
-  document.getElementById('newChatBtn').addEventListener('click', () => {
+  // Form kirim pesan
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return; // 🛡️ cegah kirim pesan kosong
+
+    appendMessage(text, 'user');
+    input.value = '';
+    appendMessage('...', 'assistant');
+
+    const res = await safeFetch('backend/backend.php?chat=1', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: text, chat_id: currentChatId})
+    });
+    if (!res) return;
+
+    const data = await res.json();
+    const last = messagesEl.querySelector('.msg.assistant:last-child');
+    if (last && last.textContent === '...') last.remove();
+    if (data.reply) {
+      currentChatId = data.chat_id;
+      appendMessage(data.reply, 'assistant');
+      loadChatList();
+    } else {
+      appendMessage('Error', 'assistant');
+    }
+  });
+
+  newChatBtn.addEventListener('click', () => {
     currentChatId = null;
-    messagesEl.innerHTML = '<div class="text-muted">New chat started...</div>';
+    messagesEl.innerHTML = '<div class="text-muted" data-i18n="new_chat_started">New chat started...</div>';
   });
-
-  const res = await fetch('backend/backend.php?chat=1', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({message:text, chat_id:currentChatId}),
-    credentials:'include'
-  });
-
-  // 🟢 Tambahan baru untuk deteksi session expired
-  if (res.status === 401) {
-    alert('Session expired. Please login again.');
-    location.href = 'login.php';
-    return;
-  }
-
-  const data = await res.json();
-
 
   loadChatList();
-  // ===================== ☝️ AKHIR FITUR DAFTAR CHAT ☝️ =====================
-
-})();
+});
