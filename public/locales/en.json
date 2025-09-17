@@ -29,5 +29,6 @@
   "select_chat": "Select a chat or start a new one...", 
   "new_chat_started" : "New chat started...", 
   "select_language": "-", 
-  "phone_number": "Phone Number"
+  "phone_number": "Phone Number", 
+  "my_chats": "My Chats"
 }

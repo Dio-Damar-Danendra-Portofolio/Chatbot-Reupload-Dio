@@ -29,6 +29,6 @@
   "select_chat": "Pilih obrolan atau mulai obrolan baru", 
   "new_chat_started" : "Obrolan Baru dimulai...", 
   "select_language": "-", 
-  "phone_number":"Nomor Ponsel"
-
+  "phone_number":"Nomor Ponsel", 
+  "my_chats": "Obrolan Saya"
 }

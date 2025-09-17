@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <!-- Sidebar daftar chat -->
     <div class="col-md-3 border-end bg-white" style="height:100vh; overflow-y:auto;">
       <div class="d-flex justify-content-between align-items-center p-3">
-        <h6 class="m-0">💬 My Chats</h6>
+        <h6 class="m-0" data-i18n="my_chats">My Chats</h6>
         <button id="newChatBtn" class="btn btn-sm btn-success" data-i18n="new_chat">+ New Chat</button>
       </div>
       <ul id="chatList" class="list-group list-group-flush"></ul>
