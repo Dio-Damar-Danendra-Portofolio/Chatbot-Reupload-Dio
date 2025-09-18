@@ -113,12 +113,10 @@ document.addEventListener("DOMContentLoaded", () => {
             <button class="btn btn-primary" data-i18n="send">Send</button>
           </form>
         </div>
+        <div class="m-5 text-center align-items-center">
+          <h4 class="text-muted">&copy; <?php echo date('Y'); ?> Dio Damar Danendra</h4>
+        </div>
       </div>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-md-6">
-      h6.text-center
     </div>
   </div>
 </div>
