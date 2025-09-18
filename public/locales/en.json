@@ -11,7 +11,7 @@
   "language": "Language",
   "username": "Username or Email",
   "password": "Password", 
-  "user": "Current Chatbot User:", 
+  "user": "Current User:", 
   "welcome_title": "Welcome to Chatbot!", 
   "username_label": "Username",
   "email_label": "E-mail", 

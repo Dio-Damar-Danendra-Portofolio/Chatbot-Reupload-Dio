@@ -82,14 +82,18 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="col-md-9">
       <nav class="navbar navbar-light bg-white shadow-sm mb-4">
         <div class="container d-flex justify-content-between align-items-center">
-          <span class="navbar-brand mb-0 h6" data-i18n="user">Current Chatbot User: </span>
-            <strong id="username" class="navbar-brand mb-0 h6"><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
+          <strong id="username" class="navbar-brand mb-0 h6 ms-2">
+              <?php echo htmlspecialchars($_SESSION['username']); ?>
+          </strong>
           <div class="m-3 text-center">
             <select id="localeSelect" class="form-select w-auto mx-auto" title="Select Language" data-i18n-title="select_language">
               <option value="" data-i18n="select_language">Select Language</option>
               <option value="en">English</option>
               <option value="id">Bahasa Indonesia</option>
             </select>
+            <a href="update_profile" target="_self" title="Edit Profile" data-i18n-title="edit_profile">
+              <i class="bi bi-gear-fill"></i>
+            </a>
           </div>
           <form action="logout.php" method="post" class="mb-0">
             <button class="btn btn-danger" data-i18n="logout">Logout</button>
@@ -101,7 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="card shadow-sm p-4">
           <div id="messages" class="mb-3"
             style="height:300px; overflow-y:auto; border:1px solid #dee2e6; padding:1rem; border-radius:8px; background:#f8f9fa;">
-            <div class="text-muted" data-i18n="select_chat">Select a chat or start a new one...</div>
           </div>
           <form id="chatForm" class="d-flex gap-2">
           <input type="text" 
@@ -120,5 +123,105 @@ document.addEventListener("DOMContentLoaded", () => {
     </div>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// =============== Chat Logic (Kode 1, dimodifikasi untuk i18n) ===============
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('chatForm');
+  const input = document.getElementById('inputMsg');
+  const messagesEl = document.getElementById('messages');
+  const chatListEl = document.getElementById('chatList');
+  const newChatBtn = document.getElementById('newChatBtn');
+  let currentChatId = null;
+
+  async function appendMessage(textOrKey, role, isI18n = false) {
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    if (isI18n) {
+      div.setAttribute('data-i18n', textOrKey);
+      div.textContent = '';
+      messagesEl.appendChild(div);
+      await applyTranslations(localStorage.getItem("locale") || "en");
+    } else {
+      div.textContent = textOrKey;
+      messagesEl.appendChild(div);
+    }
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  async function safeFetch(url, options = {}) {
+    const res = await fetch(url, {
+      credentials: 'include',
+      ...options
+    });
+    if (res.status === 401) {
+      alert('Session expired. Please login again.');
+      location.href = 'login.php';
+      return null;
+    }
+    return res;
+  }
+
+  async function loadChatList() {
+    const res = await safeFetch('/backend/backend.php?list_chats=1');
+    if (!res) return;
+    const chats = await res.json();
+    chatListEl.innerHTML = '';
+    chats.forEach(c => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item list-group-item-action';
+      li.textContent = c.title;
+      li.onclick = () => loadChat(c.id);
+      chatListEl.appendChild(li);
+    });
+  }
+
+  async function loadChat(id) {
+    currentChatId = id;
+    const res = await safeFetch('/backend/backend.php?get_chat=' + id);
+    if (!res) return;
+    const msgs = await res.json();
+    messagesEl.innerHTML = '';
+    msgs.forEach(m => appendMessage(m.message, m.role === 'user' ? 'user' : 'model'));
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    appendMessage(text, 'user');
+    input.value = '';
+    appendMessage('...', 'model');
+
+    const res = await safeFetch('/backend/backend.php?chat=1', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: text, chat_id: currentChatId})
+    });
+    if (!res) return;
+
+    const data = await res.json();
+    const last = messagesEl.querySelector('.msg.model:last-child');
+    if (last && last.textContent === '...') last.remove();
+    if (data.reply) {
+      currentChatId = data.chat_id;
+      appendMessage(data.reply, 'model');
+      loadChatList();
+    } else {
+      appendMessage('Error', 'model');
+    }
+  });
+
+  newChatBtn.addEventListener('click', () => {
+    currentChatId = null;
+    messagesEl.innerHTML = '';
+    appendMessage('new_chat_started', 'system', true);
+  });
+
+  loadChatList();
+  appendMessage('select_chat', 'system', true);
+});
+</script>
 </body>
 </html>

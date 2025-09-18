@@ -1,3 +1,7 @@
+import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({});
+
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('chatForm');
   const input = document.getElementById('inputMsg');
@@ -83,10 +87,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  async function loadTranslations(locale) {
+    const url = (location.pathname.includes('/public/') ? 'locales/' : 'public/locales/') + locale + '.json';
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to load ' + url);
+      const json = await res.json();
+      return json;
+    } catch (err) {
+      console.error('i18n load error', err);
+      return {};
+    }
+  }
+
+  async function applyTranslations(locale) {
+    const translations = await loadTranslations(locale);
+    // text replacements
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (!key) return;
+      if (translations[key]) el.textContent = translations[key];
+    });
+    // placeholder replacements
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (!key) return;
+      if (translations[key]) el.setAttribute('placeholder', translations[key]);
+    });
+
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      const key = el.getAttribute('data-i18n-title');
+      if (!key) return;
+      if (translations[key]) el.setAttribute('title', translations[key]);
+    });
+  }
+
   newChatBtn.addEventListener('click', () => {
     currentChatId = null;
-    messagesEl.innerHTML = '<div class="text-muted"><span data-i18n="new_chat_started">New chat started...</span></div>';
+    messagesEl.innerHTML = '<div class="text-muted"><span data-i18n="new_chat_started"></span></div>';
+    applyTranslations(localStorage.getItem("locale") || "en");
   });
 
   loadChatList();
+  appendMessage('select_chat', 'model', true);
 });
