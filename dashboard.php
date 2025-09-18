@@ -116,6 +116,11 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     </div>
   </div>
+  <div class="row">
+    <div class="col-md-6">
+      h6.text-center
+    </div>
+  </div>
 </div>
 </body>
 </html>
