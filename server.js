@@ -27,24 +27,6 @@ const allowedOrigins = [
 ];
 app.use(cors({ origin: allowedOrigins })); 
 
-// --- ROUTE PENGUJIAN BARU ---
-// Gunakan browser untuk mengakses http://localhost:3000/test
-app.get('/test', (req, res) => {
-    // Ini akan menguji apakah AI berhasil diinisialisasi
-    if (ai && model) {
-        res.status(200).json({ 
-            status: "OK", 
-            message: "Server running, AI Model Initialized. (Key status unknown until POST /chat is called)" 
-        });
-    } else {
-        res.status(500).json({ 
-            status: "Error", 
-            message: "AI Model Initialization Failed." 
-        });
-    }
-});
-// ----------------------------
-
 // 4. Endpoint untuk menangani permintaan chat (POST /chat)
 app.post('/chat', async (req, res) => {
     try {
@@ -79,12 +61,12 @@ app.post('/chat', async (req, res) => {
         console.error("DEBUG: Model returned no readable text content.");
         console.error("DEBUG: Full Gemini Result Object (Periksa ini untuk error API Key):", JSON.stringify(result, null, 2));
 
-        // --- Mengirim Status 200 agar Frontend menerima properti 'text' ---
-        const debugMessage = "⚠️ DEBUG ERROR (SERVER): Model gagal memberikan output teks. Kemungkinan API Key tidak valid. Cek log server untuk objek respons penuh.";
+        // --- MENGUBAH STATUS KE 500 (INTERNAL SERVER ERROR) KARENA API GAGAL ---
+        const debugMessage = "⚠️ DEBUG ERROR (API GAGAL): Model gagal memberikan output teks. Kemungkinan besar: API Key tidak valid. Periksa log server Anda untuk objek respons lengkap.";
         
-        // Mengembalikan status 200, tetapi dengan pesan error debug yang terstruktur.
-        return res.status(200).json({ 
-            text: debugMessage 
+        // Mengembalikan status 500. Frontend sekarang akan membaca properti 'error'.
+        return res.status(500).json({ 
+            error: debugMessage 
         });
 
     } catch (error) {
@@ -96,6 +78,7 @@ app.post('/chat', async (req, res) => {
              errorMessage = "API Key tidak valid. Silakan periksa kunci Anda di file .env.";
         }
         
+        // Mengembalikan status 500
         return res.status(500).json({ error: errorMessage });
     }
 });
