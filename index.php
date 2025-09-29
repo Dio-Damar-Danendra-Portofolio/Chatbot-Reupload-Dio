@@ -10,7 +10,12 @@
         #chat-window { border: 1px solid #ced4da; padding: 1rem; margin-bottom: 1rem; border-radius: 5px; height: 300px; overflow-y: auto; background-color: #e9ecef; }
         .message { margin-bottom: 0.5rem; padding: 0.5rem; border-radius: 8px; max-width: 80%; }
         .user { background-color: #007bff; color: white; margin-left: auto; text-align: right; }
-        .gemini { background-color: #d1ecf1; color: #0c5460; text-align: left; }
+        .gemini { 
+            background-color: #d1ecf1; 
+            color: #0c5460; 
+            text-align: left; 
+            white-space: pre-wrap; /* Mempertahankan format pesan error */
+        }
         #input-container { display: flex; }
         #prompt-input { flex-grow: 1; padding: 0.75rem; border: 1px solid #ced4da; border-radius: 5px 0 0 5px; }
         #send-button { padding: 0.75rem 1rem; background-color: #28a745; color: white; border: none; border-radius: 0 5px 5px 0; cursor: pointer; }
@@ -33,7 +38,6 @@
         const sendButton = document.getElementById("send-button");
         const SERVER_URL = 'http://localhost:3000/chat';
 
-        // Fungsi untuk menambahkan pesan ke jendela chat
         function addMessage(text, sender) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
@@ -60,17 +64,18 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // --- LOGIKA PENANGANAN RESPONS 200 OK YANG DIPERKUAT ---
+                    // Status 200: Respons Sukses atau Diblokir (Cek 1 atau Cek 2)
                     if (data && data.text) {
                         addMessage(data.text, 'gemini');
                     } else {
-                        // Ini adalah blok yang terpicu saat Anda melihat Data mentah: {}
-                        console.error("DEBUG FRONTEND: Respons 200 OK, tetapi properti 'text' hilang. Data mentah:", data);
-                        addMessage(`🚨 DEBUG FATAL (SERVER): Server merespons 200 OK, tetapi data mentah adalah ${JSON.stringify(data)}. Ini melanggar logika debug di server.js.`, 'gemini');
+                        // Kasus 200 OK dengan data kosong (INI BUG LAMA ANDA)
+                        console.error("DEBUG FRONTEND: Respons 200 OK, properti 'text' hilang. Data mentah:", data);
+                        addMessage(`🚨 DEBUG ERROR: Server mengembalikan 200 OK tanpa teks balasan. Cek konsol.`, 'gemini');
                     }
                 } else {
-                    // Menangani status non-200 (misalnya 500 dari blok catch server)
-                    addMessage(`Error dari server (${response.status}): ${data.error || 'Terjadi kesalahan.'}`, 'gemini');
+                    // Status Non-200 (400, 500 dari blok Cek 3 atau Catch)
+                    const errorMessage = data.error || 'Terjadi kesalahan tidak dikenal di server.';
+                    addMessage(`❌ ERROR SERVER (${response.status}): ${errorMessage}`, 'gemini');
                 }
 
             } catch (error) {
