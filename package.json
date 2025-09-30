@@ -6,6 +6,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
+    "firebase-admin": "^13.5.0",
     "openai": "^5.22.0"
   },
   "name": "coba-coba-dio",
@@ -13,10 +14,19 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module"
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dio-Damar-Danendra-Portofolio/Chatbot-Reupload-Dio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Dio-Damar-Danendra-Portofolio/Chatbot-Reupload-Dio/issues"
+  },
+  "homepage": "https://github.com/Dio-Damar-Danendra-Portofolio/Chatbot-Reupload-Dio#readme"
 }
