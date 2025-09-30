@@ -1,7 +1,7 @@
 import 'dotenv/config'; 
 import express from 'express';
 import cors from 'cors'; 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI } from '@google/generative-ai'; 
 
 const app = express();
 const port = 3000;
@@ -9,23 +9,38 @@ const port = 3000;
 // Middleware 1: Parsing JSON (WAJIB di awal)
 app.use(express.json());
 
-// 1. Inisialisasi Model dan API Key
+// 1. Inisialisasi API Key dari .env
 const API_KEY = process.env.GEMINI_API_KEY; 
 
 if (!API_KEY) {
-    // Pesan error jika environment variable tidak ditemukan
     throw new Error("GEMINI_API_KEY not found in .env file. Please check your configuration.");
 }
 
-// --- VALIDASI KRITIS API KEY ---
-// Kunci AIzaSy TIDAK VALID untuk Gemini API. Pemeriksaan ini akan memaksa server berhenti.
-// if (API_KEY.startsWith("AIzaSy")) {
-//     throw new Error("FATAL ERROR: API Key yang Anda gunakan dimulai dengan 'AIzaSy'. Ini adalah kunci API umum Google Cloud dan TIDAK VALID untuk Gemini. Silakan buat kunci baru dari Google AI Studio atau Google Cloud Console SETELAH mengaktifkan Gemini API.");
-// }
-// --- AKHIR VALIDASI KRITIS ---
-
+// Inisialisasi GoogleGenerativeAI menggunakan API Key (Mendukung AIzaSy...)
 const ai = new GoogleGenerativeAI(API_KEY);
-const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+// PERBAIKAN KRITIS: Mengganti nama model yang tidak didukung (gemini-1.5-pro-001) 
+// dengan nama model publik yang benar.
+const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" }); 
+
+// Bagian ini adalah contoh bagaimana Anda bisa menggunakan ListModels 
+// untuk menemukan nama model yang benar. Anda bisa menghapusnya setelah digunakan.
+/*
+async function logAvailableModels() {
+    try {
+        console.log("--- Daftar Model yang Tersedia ---");
+        const { models } = await ai.listModels();
+        // Hanya tampilkan model yang dapat digunakan untuk generateContent
+        const runnableModels = models.filter(m => m.supportedGenerationMethods.includes("generateContent"));
+        runnableModels.forEach(m => console.log(`Nama Model: ${m.name}`));
+        console.log("---------------------------------");
+    } catch (e) {
+        console.error("Gagal mendapatkan daftar model:", e.message);
+    }
+}
+// Panggil ListModels sekali saat server dimulai
+logAvailableModels();
+*/
 
 // 2. Konfigurasi CORS
 const allowedOrigins = [
@@ -35,18 +50,14 @@ const allowedOrigins = [
 ];
 app.use(cors({ origin: allowedOrigins })); 
 
-// --- ROUTE PENGUJIAN BARU ---
-// Gunakan browser untuk mengakses http://localhost:3000/test
 app.get('/test', (req, res) => {
-    // Ini akan menguji apakah AI berhasil diinisialisasi
     if (ai && model) {
-        res.status(200).json({ status: "OK", message: "Server berjalan dan model Gemini berhasil diinisialisasi (dengan asumsi API Key valid)." });
+        res.status(200).json({ status: "OK", message: "Server berjalan dan model Gemini berhasil diinisialisasi menggunakan API Key." });
     } else {
         res.status(500).json({ status: "ERROR", message: "Gagal inisialisasi model." });
     }
 });
 
-// 4. Endpoint untuk menangani permintaan chat (POST /chat)
 app.post('/chat', async (req, res) => {
     try {
         const userMessage = req.body.message;
@@ -58,12 +69,13 @@ app.post('/chat', async (req, res) => {
         const result = await model.generateContent(userMessage);
         const response = result.response;
 
-        // Cek 1: Jika response.text tersedia, gunakan
-        if (response && response.text) {
-            return res.json({ text: response.text });
+        // Cek 1: Berhasil mendapatkan teks
+        if (response && response.candidates && response.candidates.length > 0 && response.candidates[0].content && response.candidates[0].content.parts) {
+            const text = response.candidates[0].content.parts[0].text;
+            return res.json({ text });
         } 
         
-        // Cek 2: Cek apakah respons diblokir
+        // Cek 2: Diblokir karena alasan keamanan
         if (response && response.promptFeedback && response.promptFeedback.blockReason) {
             const blockReason = response.promptFeedback.blockReason;
             const userFeedback = `⚠️ Maaf, balasan diblokir karena alasan keamanan (${blockReason}). Silakan ajukan pertanyaan yang berbeda.`;
@@ -76,19 +88,20 @@ app.post('/chat', async (req, res) => {
         console.error("DEBUG: Full Gemini Result Object (Periksa ini untuk error API Key):", JSON.stringify(result, null, 2));
 
         // Mengembalikan status 200, tetapi dengan pesan error debug yang terstruktur.
-        const debugMessage = "⚠️ DEBUG ERROR (SERVER): Model gagal memberikan output teks. Kemungkinan API Key tidak valid. Cek log server untuk objek respons penuh.";
+        const debugMessage = "⚠️ DEBUG ERROR (SERVER): Model gagal memberikan output teks. Kemungkinan ada masalah konfigurasi atau respons API tidak terduga.";
         return res.status(200).json({ 
             text: debugMessage 
         });
 
     } catch (error) {
-        // Catch untuk ERROR Jaringan/API key non-valid/rate limit (status 500).
+        // Blok Catch: Tangani error Jaringan/API key non-valid/rate limit (status 500).
         console.error("Gemini API Error (Catch Block):", error);
         
         let errorMessage = "Failed to generate content: " + error.message;
+        
+        // Pesan ini mungkin muncul jika kunci AIzaSy... TIDAK valid untuk Gemini API.
         if (error.message.includes("API key not valid")) {
-             // Pesan error spesifik ini muncul jika kunci memiliki pola yang benar tetapi tidak aktif/salah.
-             errorMessage = "API Key tidak valid. Silakan periksa kunci Anda di file .env.";
+             errorMessage = "API Key Anda terdeteksi, tetapi tidak valid untuk Gemini API. Harap buat kunci baru dari Google AI Studio.";
         }
         
         return res.status(500).json({ error: errorMessage });
@@ -97,6 +110,6 @@ app.post('/chat', async (req, res) => {
 
 app.listen(port, () => {
     console.log(`Server Node.js berjalan di http://localhost:${port}`);
+    console.log(`Nama Model yang Digunakan: ${model.model}`);
     console.log(`GEMINI_API_KEY yang digunakan: ${API_KEY.substring(0, 10)}...`);
-    // Lanjutkan dengan pengujian di browser Anda
 });
