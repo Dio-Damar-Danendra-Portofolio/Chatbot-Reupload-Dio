@@ -19,9 +19,9 @@ if (!API_KEY) {
 
 // --- VALIDASI KRITIS API KEY ---
 // Kunci AIzaSy TIDAK VALID untuk Gemini API. Pemeriksaan ini akan memaksa server berhenti.
-if (API_KEY.startsWith("AIzaSy")) {
-    throw new Error("FATAL ERROR: API Key yang Anda gunakan dimulai dengan 'AIzaSy'. Ini adalah kunci API umum Google Cloud dan TIDAK VALID untuk Gemini. Silakan buat kunci baru dari Google AI Studio atau Google Cloud Console SETELAH mengaktifkan Gemini API.");
-}
+// if (API_KEY.startsWith("AIzaSy")) {
+//     throw new Error("FATAL ERROR: API Key yang Anda gunakan dimulai dengan 'AIzaSy'. Ini adalah kunci API umum Google Cloud dan TIDAK VALID untuk Gemini. Silakan buat kunci baru dari Google AI Studio atau Google Cloud Console SETELAH mengaktifkan Gemini API.");
+// }
 // --- AKHIR VALIDASI KRITIS ---
 
 const ai = new GoogleGenerativeAI(API_KEY);
