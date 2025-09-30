@@ -2,7 +2,7 @@
         import { GoogleGenerativeAI } from 'https://esm.run/@google/generative-ai';
 
         const outputElement = document.getElementById("output");
-        const API_KEY = "AIzaSyBmXH0TsRUDnS6kBR7tXU3lOB4WvraDOLA"; 
+        const API_KEY = "AIzaSyBbjNFDaXzJzHlfc1K5RZPNeqtFrJroAkk"; 
         
         async function main() {
             try {
