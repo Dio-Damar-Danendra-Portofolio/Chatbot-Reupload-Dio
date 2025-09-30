@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Gemini Chatbot Demo</title>
+    <title>Dio's Chatbot</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f0ff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; flex-direction: column; color: #333; }
         .container { background-color: #fff; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); width: 80%; max-width: 600px; }
@@ -24,7 +24,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Gemini Chatbot</h1>
+        <h1>Dio's Chatbot</h1>
         <div id="chat-window"></div>
         <div id="input-container">
             <input type="text" id="prompt-input" placeholder="Ketik pesan Anda di sini...">
