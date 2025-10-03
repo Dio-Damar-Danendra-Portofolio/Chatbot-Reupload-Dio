@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Gemini Chatbot Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Gemini Chatbot Demo</title>
     <style>
         /* CSS Dasar */
         body { 
@@ -15,8 +16,8 @@
             margin: 0; 
             flex-direction: column; 
             color: #333; 
-            padding: 10px; /* Padding untuk mencegah konten menempel di tepi layar */
-            box-sizing: border-box; /* Memastikan padding tidak menambah total lebar */
+            padding: 10px; 
+            box-sizing: border-box; 
         }
         .container { 
             background-color: #fff; 
@@ -43,9 +44,9 @@
         }
         .message { 
             margin-bottom: 0.5rem; 
-            padding: 0.75rem; /* Sedikit lebih besar untuk keterbacaan */
-            border-radius: 15px; /* Lebih membulat */
-            max-width: 85%; /* Sedikit lebih lebar */
+            padding: 0.75rem; 
+            border-radius: 15px; 
+            max-width: 85%; 
             line-height: 1.4;
         }
         .user { 
@@ -53,7 +54,7 @@
             color: white; 
             margin-left: auto; 
             text-align: right; 
-            border-bottom-right-radius: 2px; /* Arahkan sudut */
+            border-bottom-right-radius: 2px; 
         }
         .gemini { 
             background-color: #d1ecf1; 
@@ -61,7 +62,7 @@
             text-align: left; 
             white-space: pre-wrap;
             margin-right: auto;
-            border-bottom-left-radius: 2px; /* Arahkan sudut */
+            border-bottom-left-radius: 2px; 
         }
         #input-container { 
             display: flex; 
@@ -80,7 +81,7 @@
             border: none; 
             border-radius: 0 5px 5px 0; 
             cursor: pointer; 
-            transition: background-color 0.2s; /* Efek hover */
+            transition: background-color 0.2s; 
         }
         #send-button:hover:not(:disabled) {
             background-color: #218838;
@@ -93,24 +94,24 @@
         /* --- Media Queries untuk Responsif --- */
         @media (max-width: 768px) {
             body {
-                height: auto; /* Biarkan tinggi body menyesuaikan konten */
+                height: auto; 
                 min-height: 100vh;
                 padding: 5px;
             }
             .container {
-                width: 100%; /* Lebar penuh di layar kecil */
+                width: 100%; 
                 padding: 1rem;
-                margin: 20px 0; /* Memberi ruang di atas dan bawah */
+                margin: 20px 0; 
             }
             h1 {
-                font-size: 1.5rem; /* Ukuran h1 lebih kecil */
+                font-size: 1.5rem; 
             }
             #chat-window {
-                height: 40vh; /* Tinggi window chat relatif terhadap viewport */
+                height: 40vh; 
                 padding: 0.75rem;
             }
             .message {
-                font-size: 0.9rem; /* Ukuran font pesan lebih kecil */
+                font-size: 0.9rem; 
             }
             #prompt-input {
                 padding: 0.6rem;
@@ -126,16 +127,16 @@
                 padding: 0.75rem;
             }
             #chat-window {
-                height: 60vh; /* Lebih tinggi di perangkat sangat kecil */
+                height: 60vh; 
             }
             .message {
-                max-width: 90%; /* Pesan lebih lebar lagi */
+                max-width: 90%; 
             }
             #input-container {
-                flex-direction: row; /* Pertahankan tata letak horizontal untuk input */
+                flex-direction: row; 
             }
             #send-button {
-                padding: 0.6rem 0.5rem; /* Padding tombol kirim lebih kecil */
+                padding: 0.6rem 0.5rem; 
             }
             #prompt-input::placeholder {
                 font-size: 0.85rem;
@@ -185,16 +186,13 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Status 200: Respons Sukses atau Diblokir (Cek 1 atau Cek 2)
                     if (data && data.text) {
                         addMessage(data.text, 'gemini');
                     } else {
-                        // Kasus 200 OK dengan data kosong (INI BUG LAMA ANDA)
                         console.error("DEBUG FRONTEND: Respons 200 OK, properti 'text' hilang. Data mentah:", data);
                         addMessage(`🚨 DEBUG ERROR: Server mengembalikan 200 OK tanpa teks balasan. Cek konsol.`, 'gemini');
                     }
                 } else {
-                    // Status Non-200 (400, 500 dari blok Cek 3 atau Catch)
                     const errorMessage = data.error || 'Terjadi kesalahan tidak dikenal di server.';
                     addMessage(`❌ ERROR SERVER (${response.status}): ${errorMessage}`, 'gemini');
                 }

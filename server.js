@@ -6,7 +6,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const app = express();
 const port = 3000;
 
-// Middleware 1: Parsing JSON (WAJIB di awal)
+// Middleware 1: Parsing JSON
 app.use(express.json());
 
 // 1. Inisialisasi API Key dari .env
@@ -16,31 +16,32 @@ if (!API_KEY) {
     throw new Error("GEMINI_API_KEY not found in .env file. Please check your configuration.");
 }
 
-// Inisialisasi GoogleGenerativeAI menggunakan API Key (Mendukung AIzaSy...)
+// Inisialisasi GoogleGenerativeAI
 const ai = new GoogleGenerativeAI(API_KEY);
 
-// PERBAIKAN KRITIS: Mengganti nama model yang tidak didukung (gemini-1.5-pro-001) 
-// dengan nama model publik yang benar.
-const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" }); 
+// Gunakan variabel untuk model yang akan kita gunakan
+const geminiModel = ai.getGenerativeModel({ model: "gemini-2.5-pro" }); 
 
-// Bagian ini adalah contoh bagaimana Anda bisa menggunakan ListModels 
-// untuk menemukan nama model yang benar. Anda bisa menghapusnya setelah digunakan.
-/*
-async function logAvailableModels() {
+// INISIALISASI OBJEK CHAT GLOBAL (Simpan riwayat obrolan)
+let chat = null;
+
+// Fungsi untuk memulai sesi obrolan baru
+async function startChatSession() {
     try {
-        console.log("--- Daftar Model yang Tersedia ---");
-        const { models } = await ai.listModels();
-        // Hanya tampilkan model yang dapat digunakan untuk generateContent
-        const runnableModels = models.filter(m => m.supportedGenerationMethods.includes("generateContent"));
-        runnableModels.forEach(m => console.log(`Nama Model: ${m.name}`));
-        console.log("---------------------------------");
+        // Objek 'chat' sekarang akan mempertahankan riwayat obrolan
+        chat = geminiModel.startChat({
+            history: [], // Mulai dengan riwayat kosong
+        });
+        console.log("Sesi Chat Gemini berhasil dimulai.");
     } catch (e) {
-        console.error("Gagal mendapatkan daftar model:", e.message);
+        console.error("Gagal memulai sesi chat:", e.message);
+        // Pertimbangkan untuk keluar dari aplikasi jika inisialisasi gagal
+        // process.exit(1); 
     }
 }
-// Panggil ListModels sekali saat server dimulai
-logAvailableModels();
-*/
+
+// Panggil startChatSession sekali saat server dimulai
+startChatSession(); 
 
 // 2. Konfigurasi CORS
 const allowedOrigins = [
@@ -51,10 +52,10 @@ const allowedOrigins = [
 app.use(cors({ origin: allowedOrigins })); 
 
 app.get('/test', (req, res) => {
-    if (ai && model) {
-        res.status(200).json({ status: "OK", message: "Server berjalan dan model Gemini berhasil diinisialisasi menggunakan API Key." });
+    if (ai && chat) {
+        res.status(200).json({ status: "OK", message: "Server berjalan dan model Gemini berhasil diinisialisasi untuk mode chat." });
     } else {
-        res.status(500).json({ status: "ERROR", message: "Gagal inisialisasi model." });
+        res.status(500).json({ status: "ERROR", message: "Gagal inisialisasi model chat." });
     }
 });
 
@@ -65,8 +66,14 @@ app.post('/chat', async (req, res) => {
         if (!userMessage) {
             return res.status(400).json({ error: "Message is required" });
         }
+        
+        if (!chat) {
+             return res.status(503).json({ error: "Chat service is not available (failed to initialize)." });
+        }
 
-        const result = await model.generateContent(userMessage);
+        // PERUBAHAN KRITIS: Menggunakan chat.sendMessage() untuk mempertahankan memori
+        const result = await chat.sendMessage(userMessage); 
+
         const response = result.response;
 
         // Cek 1: Berhasil mendapatkan teks
@@ -83,11 +90,10 @@ app.post('/chat', async (req, res) => {
             return res.json({ text: userFeedback });
         }
 
-        // Cek 3 (BLOK KRITIS UNTUK DEBUGGING): Tangani undefined/kosong
+        // Cek 3: Tangani undefined/kosong
         console.error("DEBUG: Model returned no readable text content.");
-        console.error("DEBUG: Full Gemini Result Object (Periksa ini untuk error API Key):", JSON.stringify(result, null, 2));
+        console.error("DEBUG: Full Gemini Result Object:", JSON.stringify(result, null, 2));
 
-        // Mengembalikan status 200, tetapi dengan pesan error debug yang terstruktur.
         const debugMessage = "⚠️ DEBUG ERROR (SERVER): Model gagal memberikan output teks. Kemungkinan ada masalah konfigurasi atau respons API tidak terduga.";
         return res.status(200).json({ 
             text: debugMessage 
@@ -99,7 +105,6 @@ app.post('/chat', async (req, res) => {
         
         let errorMessage = "Failed to generate content: " + error.message;
         
-        // Pesan ini mungkin muncul jika kunci AIzaSy... TIDAK valid untuk Gemini API.
         if (error.message.includes("API key not valid")) {
              errorMessage = "API Key Anda terdeteksi, tetapi tidak valid untuk Gemini API. Harap buat kunci baru dari Google AI Studio.";
         }
@@ -110,6 +115,6 @@ app.post('/chat', async (req, res) => {
 
 app.listen(port, () => {
     console.log(`Server Node.js berjalan di http://localhost:${port}`);
-    console.log(`Nama Model yang Digunakan: ${model.model}`);
-    console.log(`GEMINI_API_KEY yang digunakan: ${API_KEY.substring(0, 10)}...`);
+    console.log(`Model yang Digunakan untuk Chat: gemini-2.5-pro`);
+    console.log(`GEMINI_API_KEY yang digunakan: ${API_KEY ? API_KEY.substring(0, 10) + '...' : 'TIDAK ADA'}`);
 });
