@@ -11,7 +11,7 @@
         /* CSS Dasar */
         body { 
             font-family: Arial, sans-serif; 
-            background-color: #f0ff; 
+            background-color: #00b0ff; 
             display: flex; 
             justify-content: center; 
             align-items: center; 
