@@ -1,9 +1,12 @@
+<?php 
+    $title = "Dio Damar\'s Chatbot";
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>Gemini Chatbot Demo</title>
+    <title><?= $title; ?></title>
     <style>
         /* CSS Dasar */
         body { 
@@ -146,7 +149,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Gemini Chatbot</h1>
+        <h1><?= $title; ?></h1>
         <div id="chat-window"></div>
         <div id="input-container">
             <input type="text" id="prompt-input" placeholder="Ketik pesan Anda di sini...">
