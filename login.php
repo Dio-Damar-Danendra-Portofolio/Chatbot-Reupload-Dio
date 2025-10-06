@@ -1,0 +1,119 @@
+<?php
+require_once 'config.php';
+
+// Cek apakah user sudah login, jika ya, redirect ke index.php
+if (isset($_SESSION["loggedin"]) && $_SESSION["loggedin"] === true) {
+    header("location: index.php");
+    exit;
+}
+
+$username = $password = "";
+$username_err = $password_err = $login_err = "";
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+    // Validasi Username
+    if (empty(trim($_POST["username"]))) {
+        $username_err = "Masukkan username.";
+    } else {
+        $username = trim($_POST["username"]);
+    }
+    
+    // Validasi Password
+    if (empty(trim($_POST["password"]))) {
+        $password_err = "Masukkan password.";
+    } else {
+        $password = trim($_POST["password"]);
+    }
+
+    // Cek error input
+    if (empty($username_err) && empty($password_err)) {
+        $sql = "SELECT id, username, password FROM users WHERE username = ?";
+        
+        if ($stmt = $conn->prepare($sql)) {
+            $stmt->bind_param("s", $param_username);
+            $param_username = $username;
+            
+            if ($stmt->execute()) {
+                $stmt->store_result();
+                
+                // Cek apakah username ada, jika ya, verifikasi password
+                if ($stmt->num_rows == 1) {                    
+                    $stmt->bind_result($id, $username, $hashed_password);
+                    if ($stmt->fetch()) {
+                        if (password_verify($password, $hashed_password)) {
+                            // Password benar, mulai sesi baru
+                            session_start();
+                            
+                            // Simpan data di variabel sesi
+                            $_SESSION["loggedin"] = true;
+                            $_SESSION["id"] = $id;
+                            $_SESSION["username"] = $username;                            
+                            
+                            // Redirect ke halaman chat
+                            header("location: index.php");
+                            exit;
+                        } else {
+                            $login_err = "Username atau password salah.";
+                        }
+                    }
+                } else {
+                    $login_err = "Username atau password salah.";
+                }
+            }
+            $stmt->close();
+        }
+    }
+    
+    $conn->close();
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Dio Damar's Chatbot</title>
+    <style>
+        /* CSS KHUSUS UNTUK FORM (Sama seperti register.php) */
+        body { background-color: #00b0ff; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .wrapper { width: 360px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        .wrapper h2 { text-align: center; color: #007bff; }
+        .form-group { margin-bottom: 15px; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; box-sizing: border-box; }
+        .help-block { color: red; font-size: 0.9em; }
+        .btn-primary { 
+            width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <h2>Login Akun</h2>
+        <?php 
+        if (!empty($login_err)) {
+            echo '<div class="alert alert-danger" style="color: red; text-align: center;">' . $login_err . '</div>';
+        }        
+        ?>
+
+        <form action="<?= htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" class="form-control" value="<?= $username; ?>">
+                <span class="help-block"><?= $username_err; ?></span>
+            </div>    
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" class="form-control">
+                <span class="help-block"><?= $password_err; ?></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" class="btn-primary" value="Login">
+            </div>
+            <p>Belum punya akun? <a href="register.php">Daftar sekarang</a>.</p>
+        </form>
+    </div>
+</body>
+</html>
