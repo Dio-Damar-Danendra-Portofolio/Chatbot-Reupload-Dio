@@ -21,7 +21,7 @@
                 </div>
                 <form action="" enctype="multipart/form-data" method="post">
                     <label for="username" class="form-label fw-bold">Username</label>
-                    <input type="text" id="username" name="username" value="">
+                    <input type="text" id="username" name="username" value="<?= htmlspecialchars($_SESSION["username"]); ?>">
                 </form>
             </div>
         </div>

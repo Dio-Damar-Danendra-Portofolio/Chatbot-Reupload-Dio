@@ -67,6 +67,7 @@ $title = "Dio Damar's Chatbot - Selamat Datang, " . htmlspecialchars($_SESSION["
     <div id="sidebar">
         <h2>Pilihan dan Riwayat Chat</h2>
         <a href="profile.php" class="profile-btn">Profil</a>
+        <a href="index.php" class="index-btn">Chat Utama</a> 
         <a href="logout.php" class="logout-btn">Logout</a>
         <ul class="chat-list">
             <li class="chat-list-item <?= is_null($currentChatId) ? 'active' : ''; ?>" id="new-chat-btn" data-chat-id="null">
