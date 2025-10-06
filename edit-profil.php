@@ -20,7 +20,8 @@
                     <h2><?php echo $title; ?></h2>
                 </div>
                 <form action="" enctype="multipart/form-data" method="post">
-                    <label for="username" class="form-label">Username</label>
+                    <label for="username" class="form-label fw-bold">Username</label>
+                    <input type="text" id="username" name="username" value="">
                 </form>
             </div>
         </div>
