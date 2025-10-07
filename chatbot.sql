@@ -36,3 +36,5 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE -- KRITIS: Penghapusan chat akan menghapus semua pesan terkait
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE users ADD profile_picture VARCHAR(255) NULL DEFAULT NULL AFTER phone_number;

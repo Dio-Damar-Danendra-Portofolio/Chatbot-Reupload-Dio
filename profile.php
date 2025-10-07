@@ -4,7 +4,6 @@
 require_once 'config.php';
 
 // Pastikan sesi sudah dimulai dan variabel sesi tersedia
-// Meskipun session_start() sudah ada di config.php, ini adalah safety check yang bagus
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -16,7 +15,6 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
 }
 
 // Ambil user_id dari sesi
-// Asumsi 'id' pengguna tersimpan di sesi saat login
 $user_id = $_SESSION["id"]; 
 
 // Siapkan variabel untuk menyimpan data pengguna
@@ -80,11 +78,12 @@ if ($stmt = $conn->prepare($sql)) {
             </div>
         <?php else: ?>
             <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Detail Akun</h5>
+                <div class="card-header bg-warning text-white profile-header-container">
+                    <div class="profile-picture-placeholder">
+                        <img src="uploads/<?php ?>" alt="Profile Picture"/>
+                    </div>
                 </div>
-                <div class="card-body">
-                    
+                <div class="card-body pt-5">                    
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label text-muted">Username:</label>
