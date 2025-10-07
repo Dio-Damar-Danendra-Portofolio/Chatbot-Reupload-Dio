@@ -1,6 +1,11 @@
 <?php 
 require_once 'config.php';
 
+// Pastikan sesi sudah dimulai
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Cek autentikasi
 if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
     header("location: login.php");
@@ -51,6 +56,11 @@ if ($currentChatId) {
 }
 
 $title = "Dio Damar's Chatbot - Selamat Datang, " . htmlspecialchars($_SESSION["username"]);
+
+// Tentukan path gambar profil. Gunakan default jika profile_picture kosong/tidak ada di sesi.
+$profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION["profile_picture"])) 
+                       ? htmlspecialchars($_SESSION["profile_picture"]) 
+                       : 'default_profile.png'; // Pastikan Anda memiliki file ini di folder 'uploads/'
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -65,15 +75,18 @@ $title = "Dio Damar's Chatbot - Selamat Datang, " . htmlspecialchars($_SESSION["
 </head>
 <body>
     <div id="sidebar">
-        <h2>Pilihan dan Riwayat Chat</h2>
+        <div class="text-center">
+            <a href="index.php" style="text-decoration: none;">
+                <h1 class="fw-bold text-white">Dio's Chatbot</h1>
+            </a>
+        </div>
         <a href="profile.php" class="profile-btn">Profil</a>
-        <a href="index.php" class="index-btn">Chat Utama</a> 
-        <a href="logout.php" class="logout-btn">Logout</a>
-        <ul class="chat-list">
-            <li class="chat-list-item <?= is_null($currentChatId) ? 'active' : ''; ?>" id="new-chat-btn" data-chat-id="null">
-                <b>➕ Mulai Chat Baru</b>
-            </li>
-            <?php foreach ($chats as $chat_item): ?>
+            <a href="logout.php" class="logout-btn">Logout</a>
+            <ul class="chat-list">
+                <li class="chat-list-item <?= is_null($currentChatId) ? 'active' : ''; ?>" id="new-chat-btn" data-chat-id="null">
+                    <b>➕ Mulai Chat Baru</b>
+                </li>
+                <?php foreach ($chats as $chat_item): ?>
                 <li class="chat-list-item <?= ($chat_item['id'] == $currentChatId) ? 'active' : ''; ?>" 
                     data-chat-id="<?= $chat_item['id']; ?>">
                     <div class="chat-list-text">
@@ -84,8 +97,8 @@ $title = "Dio Damar's Chatbot - Selamat Datang, " . htmlspecialchars($_SESSION["
                         🗑️
                     </button>
                 </li>
-            <?php endforeach; ?>
-        </ul>
+                <?php endforeach; ?>
+            </ul>
     </div>
     <div class="container">
         <h1 class="fw-bold"><?= $title; ?></h1>
@@ -249,6 +262,7 @@ $title = "Dio Damar's Chatbot - Selamat Datang, " . htmlspecialchars($_SESSION["
                     if (chatListItem) {
                         const titleTextElement = chatListItem.querySelector('.chat-list-text');
                         const now = new Date();
+                        // Format waktu yang sederhana
                         const formattedTime = now.toLocaleTimeString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(' at ', ', '); 
                         titleTextElement.innerHTML = `${data.title} <small style="color: #bbb; display: block;">${formattedTime}</small>`;
                     } 

@@ -18,11 +18,11 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
 $user_id = $_SESSION["id"]; 
 
 // Siapkan variabel untuk menyimpan data pengguna
-$username = $email = $phone_number = $created_at = "";
+$username = $email = $phone_number = $profile_picture = $created_at = "";
 $error = "";
 
 // Query SQL untuk mengambil data pengguna
-$sql = "SELECT username, email, phone_number, created_at FROM users WHERE id = ?";
+$sql = "SELECT username, email, phone_number, profile_picture, created_at FROM users WHERE id = ?";
 
 // PENGGUNAAN MYSQLI: Gunakan $conn dan prepare()
 if ($stmt = $conn->prepare($sql)) { 
@@ -39,6 +39,7 @@ if ($stmt = $conn->prepare($sql)) {
                 $username = $row["username"];
                 $email = $row["email"];
                 $phone_number = $row["phone_number"];
+                $profile_picture = $row["profile_picture"];
                 $created_at = $row["created_at"];
             }
         } else {
@@ -70,7 +71,7 @@ if ($stmt = $conn->prepare($sql)) {
     <?php include "include/sidebar.php"; ?>
     
     <div class="main-content container-fluid p-4">
-        <h1 class="page-header text-dark fw-bold mb-4">Profil Pengguna</h1>
+        <h3 class="page-header text-dark fw-bold mb-4 text-center">Profil Pengguna</h3>
         
         <?php if (!empty($error)): ?>
             <div class="alert alert-danger" role="alert">
@@ -78,9 +79,9 @@ if ($stmt = $conn->prepare($sql)) {
             </div>
         <?php else: ?>
             <div class="card shadow-sm">
-                <div class="card-header bg-warning text-white profile-header-container">
+                <div class="card-header bg-warning text-white profile-header-container text-center">
                     <div class="profile-picture-placeholder">
-                        <img src="uploads/<?php ?>" alt="Profile Picture"/>
+                        <img src="uploads/<?php echo htmlspecialchars($profile_picture); ?>" class="img-fluid mb-3 rounded-circle shadow mt-2" style="max-width: 250px; width: 100%; height: auto; object-fit: cover;" alt="Profile Picture"/>
                     </div>
                 </div>
                 <div class="card-body pt-5">                    
@@ -96,13 +97,9 @@ if ($stmt = $conn->prepare($sql)) {
                     </div>
                     
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-12 mb-3">
                             <label class="form-label text-muted">Nomor Telepon:</label>
                             <p class="fs-5 fw-bold"><?php echo htmlspecialchars($phone_number); ?></p>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-muted">Bergabung Sejak:</label>
-                            <p class="fs-5 fw-bold"><?php echo date("d M Y, H:i", strtotime($created_at)); ?></p>
                         </div>
                     </div>
                     
