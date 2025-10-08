@@ -55,7 +55,7 @@ if ($currentChatId) {
     }
 }
 
-$title = "Kelas Guru Chatbot - Selamat Datang, " . htmlspecialchars($_SESSION["username"]); // Judul diubah
+$title = "Dio's Chatbot - Selamat Datang, " . htmlspecialchars($_SESSION["username"]); // Judul diubah
 
 // Tentukan path gambar profil. Gunakan default jika profile_picture kosong/tidak ada di sesi.
 $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION["profile_picture"])) 
@@ -76,7 +76,7 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
 <body>
     <?php 
     // Menggunakan sidebar_index.php yang sudah dimodifikasi
-    include "sidebar_index.php"; 
+    include "include/sidebar_index.php"; 
     ?>
     <div class="container">
         <h1 class="fw-bold"><?= $title; ?></h1>
