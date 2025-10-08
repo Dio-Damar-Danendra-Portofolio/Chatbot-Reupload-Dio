@@ -116,10 +116,10 @@ $profile_pic_filename = (!empty($profile_picture))
                 </div>
                 <div class="card-footer text-end">
                     <div class="row">
-                        <div class="col-lg-6">
+                        <div class="col-lg-6 d-grid gap-2 mb-2 mb-md-0">
                             <a class="btn btn-primary" style="text-decoration: none;" href="edit-profil.php">Edit Profil</a>
                         </div>
-                        <div class="col-lg-6">
+                        <div class="col-lg-6 d-grid gap-2">
                             <a class="btn btn-secondary" style="text-decoration: none;" href="ganti-password.php">Ubah Kata Sandi</a>
                         </div>
                     </div>
