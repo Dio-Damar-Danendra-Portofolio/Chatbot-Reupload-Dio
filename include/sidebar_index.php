@@ -2,18 +2,22 @@
 <div id="sidebar">
     <div class="text-center sidebar-header">
         <a href="index.php" style="text-decoration: none;">
-            <h1 class="fw-bold text-white">Dio's Chatbot</h1> 
+            <h1 class="fw-bold text-white">Kelas Guru</h1> 
         </a>
     </div>
 
     <ul class="main-menu">
         <li class="main-menu-item">
-            <a href="index.php" class="btn btn-warning text-dark">Chat Utama</a> 
+            <a href="index.php" class="text-white">Beranda</a> 
         </li>
         <li class="main-menu-item">
-            <a href="profile.php" class="profile-btn">Profil</a> 
+            <a href="#" class="text-white">Tugas</a> 
+        </li>
+        <li class="main-menu-item">
+            <a href="#" class="text-white">Materi</a> 
         </li>
     </ul>
+
     <ul class="chat-list">
         <li class="chat-list-item <?= is_null($currentChatId) ? 'active' : ''; ?>" id="new-chat-btn" data-chat-id="null">
             <b>➕ Mulai Chat Baru</b>
@@ -34,6 +38,7 @@
     </ul>
 
     <div class="sidebar-footer">
-        <a href="logout.php" class="logout-btn fw-bold">Keluar</a>  
+        <a href="profile.php" class="profile-btn">Profil</a> 
+        <a href="logout.php" class="logout-btn">Keluar</a>  
     </div>
 </div>

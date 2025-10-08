@@ -97,22 +97,18 @@ $profile_pic_filename = (!empty($profile_picture))
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label text-muted">Username:</label>
-                            <p class="fs-5 fw-bold"><?php echo htmlspecialchars($username); ?></p>
+                            <div class="d-flex align-items-center">
+                                <label class="form-label text-muted me-2 mb-0">Username:</label>
+                                <span class="fw-bold mb-0"><?php echo htmlspecialchars($username); ?></span>
+                            </div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label text-muted">Email:</label>
-                            <p class="fs-5 fw-bold"><?php echo htmlspecialchars($email); ?></p>
+                            <div class="d-flex align-items-center">
+                                <label class="form-label text-muted me-2 mb-0">Nomor Telepon:</label>
+                                <span class="fw-bold mb-0"><?php echo htmlspecialchars($phone_number); ?></span>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label text-muted">Nomor Telepon:</label>
-                            <p class="fs-5 fw-bold"><?php echo htmlspecialchars($phone_number); ?></p>
-                        </div>
-                    </div>
-                    
                 </div>
                 <div class="card-footer">
                     <div class="row">
