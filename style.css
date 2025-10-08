@@ -1,313 +1,290 @@
-        /* CSS DARI KODE ASLI ANDA, DIMODIFIKASI UNTUK SIDEBAR */
-        body { 
-            font-family: Arial, sans-serif; 
-            background-color: #00b0ff; 
-            min-height: 100vh;
-            margin: 0; 
-            color: #333; 
-            padding: 0; 
-            box-sizing: border-box;
-            display: flex; /* Layout utama menggunakan flex */
-        }
-        
-        /* CSS untuk Sidebar */
-        #sidebar {
-            width: 280px;
-            background-color: #343a40;
-            color: white;
-            padding: 20px 0;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-        #sidebar h2 {
-            color: #ffffff;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .chat-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            flex-grow: 1;
-            overflow-y: auto;
-        }
+/* CSS DARI KODE ASLI ANDA, DIMODIFIKASI UNTUK SIDEBAR */
+body { 
+    font-family: Arial, sans-serif; 
+    background-color: #00b0ff; 
+    min-height: 100vh;
+    margin: 0; 
+    color: #333; 
+    padding: 0; 
+    box-sizing: border-box;
+    display: flex; /* Layout utama menggunakan flex */
+}
 
-        /* CSS BARU untuk Item Daftar Chat dan Tombol Hapus */
-        .chat-list-item {
-            display: flex; /* Untuk menyejajarkan teks dan tombol hapus */
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            cursor: pointer;
-            border-bottom: 1px solid #495057;
-            transition: background-color 0.2s;
-            font-size: 0.9em;
-        }
-        .chat-list-item:hover, .chat-list-item.active {
-            background-color: #495057;
-        }
-        .chat-list-text {
-            flex-grow: 1; /* Biarkan teks mengisi ruang */
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .chat-list-text small {
-            pointer-events: auto;
-        }
+/* ---------------------------------------------------------------- */
+/* CSS untuk Sidebar */
+#sidebar {
+    width: 280px;
+    background-color: #343a40;
+    color: white;
+    padding: 0; /* Diubah: Dihapus padding 20px 0, padding dipindahkan ke dalam header/footer */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column; /* PENTING: Atur item agar tersusun vertikal */
+    overflow-y: hidden; /* PENTING: Matikan scroll utama di sidebar */
+    position: fixed;
+    height: 100%;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    transition: transform 0.3s ease-in-out; 
+}
 
-        /* CSS untuk Tombol Hapus */
-        .delete-chat-btn {
-            background: none;
-            border: none;
-            color: #dc3545; /* Warna merah */
-            font-size: 1.1em;
-            cursor: pointer;
-            margin-left: 10px;
-            padding: 5px;
-            line-height: 1;
-            transition: color 0.2s, background-color 0.2s;
-            border-radius: 50%;
-            z-index: 10;
-        }
-        .delete-chat-btn:hover {
-            color: #fff;
-            background-color: #dc3545;
-        }
+/* CSS untuk Konten Utama */
+.container, .main-content {
+    margin-left: 280px; /* Lebar sidebar */
+    width: 100%;
+    padding: 20px;
+    transition: margin-left 0.3s ease-in-out;
+}
 
-        .logout-btn {
-            position: static; 
-            margin: 20px;
-            text-align: center;
-            padding: 8px 15px;
-            background-color: #dc3545;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-        }
+/* CSS BARU untuk Tombol Menu (Hamburger) */
+.menu-toggle {
+    display: none; /* Default tersembunyi */
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1001;
+    background: #343a40;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 24px;
+    cursor: pointer;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
 
-        .profile-btn {
-            position: static; 
-            margin: 20px;
-            text-align: center;
-            padding: 8px 15px;
-            background-color: #00b0ff;
-            color: black;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: ease 0.4s;
-        }
+/* ---------------------------------------------------------------- */
+/* CSS BARU UNTUK UI "KELAS GURU" (MODIFIKASI GAMBAR REFERENSI) */
+/* Mengurangi padding di header agar lebih rapat ke atas */
+#sidebar .text-center {
+    padding: 15px 0 10px 0; 
+}
 
-        .profile-btn:hover {
-            position: static; 
-            margin: 20px;
-            text-align: center;
-            padding: 8px 15px;
-            background-color: #17a4e6;
-            color: black;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: ease 0.4s;
-        }
+/* Mengatur ulang font-size Judul Chatbot agar tidak terlalu besar di sidebar */
+#sidebar .text-center h1 {
+    font-size: 1.5rem; 
+    margin-bottom: 0;
+}
 
-        .index-btn{
-            position: static; 
-            margin: 20px;
-            text-align: center;
-            padding: 8px 15px;
-            background-color: #ffff00;
-            color: black;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: ease 0.4s;
-        }
+/* Styling untuk Menu Utama (Beranda, Tugas, Materi) */
+.main-menu {
+    list-style: none;
+    padding: 0 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #495057; /* Garis pemisah sebelum Riwayat Chat */
+}
 
-        .index-btn:hover {
-            position: static; 
-            margin: 20px;
-            text-align: center;
-            padding: 8px 15px;
-            background-color: #d6d616;
-            color: black;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: ease 0.4s;
-        }
-        
-        /* Container utama diubah menjadi main content */
-        .container { 
-            flex-grow: 1; 
-            background-color: #fff; 
-            padding: 2rem; 
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
-            border-radius: 0; 
-            max-width: none; 
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-            height: 100vh;
-        }
+.main-menu-item a {
+    display: block;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: background-color 0.15s;
+    margin-bottom: 5px;
+}
 
-        h1 { 
-            color: #007bff; 
-            text-align: center; 
-            margin-top: 0; 
-        }
-        #chat-window { 
-            border: 1px solid #ced4da; 
-            padding: 1rem; 
-            margin-bottom: 1rem; 
-            border-radius: 5px; 
-            height: auto; 
-            flex-grow: 1; /* Mengisi sisa ruang vertikal */
-            overflow-y: auto; 
-            background-color: #e9ecef; 
-        }
-        .message { 
-            margin-bottom: 0.5rem; 
-            padding: 0.75rem; 
-            border-radius: 15px; 
-            max-width: 85%; 
-            line-height: 1.4;
-        }
-        .user { 
-            background-color: #007bff; 
-            color: white; 
-            margin-left: auto; 
-            text-align: right; 
-            border-bottom-right-radius: 2px; 
-        }
-        .gemini { 
-            background-color: #d1ecf1; 
-            color: #0c5460; 
-            text-align: left; 
-            /* Hapus atau komentar white-space: pre-wrap; agar tidak mengganggu pre/code */
-            margin-right: auto;
-            border-bottom-left-radius: 2px; 
-        }
-        
-        /* --- STYLING UNTUK MARKDOWN DARI GEMINI --- */
-        .gemini p { 
-            margin: 0 0 10px 0; /* Jarak antar paragraf */
-        }
-        .gemini ul, .gemini ol {
-            margin: 10px 0 10px 20px; /* Indentasi untuk list */
-            padding: 0;
-        }
-        .gemini li {
-            margin-bottom: 5px;
-        }
+.main-menu-item a:hover {
+    background-color: #495057;
+}
 
-        /* Styling untuk Code Block */
-        .gemini pre {
-            background-color: #343a40; /* Latar belakang gelap */
-            color: #fff;
-            padding: 10px;
-            border-radius: 5px;
-            overflow-x: auto; /* Memungkinkan scrolling horizontal */
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
+/* ---------------------------------------------------------------- */
+/* KONTEN YANG BISA DISCROLL (DAFTAR CHAT) */
+.chat-list {
+    list-style: none;
+    padding: 0 0 10px 0; /* Padding vertikal di dalam scroll area */
+    margin: 0;
+    flex-grow: 1; /* PENTING: Memaksa elemen ini mengambil sisa ruang vertikal */
+    overflow-y: auto; /* PENTING: Hanya elemen ini yang boleh discroll */
+    overflow-x: hidden;
+}
 
-        /* Styling untuk Inline Code */
-        .gemini code {
-            background-color: rgba(108, 117, 125, 0.2); /* Abu-abu terang untuk kode inline */
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-family: Consolas, Monaco, 'Courier New', monospace;
-            font-size: 0.9em;
-        }
-        /* ------------------------------------------------ */
+/* CSS untuk Footer Tombol (TETAP DI BAWAH) */
+.sidebar-footer {
+    padding: 10px 20px; 
+    background-color: #343a40; 
+    border-top: 1px solid #495057; 
+}
 
-        /* --- STYLING BARU UNTUK ANIMASI PENGETIKAN --- */
-        .typing-indicator {
-            display: inline-block;
-            color: #0c5460;
-            font-weight: bold;
-            animation: blink 1s infinite;
-        }
+/* Modifikasi tombol agar sesuai dengan Flexbox Footer */
+.profile-btn, .logout-btn {
+    display: block;
+    padding: 10px 0; 
+    text-decoration: none;
+    color: white;
+    background-color: #007bff;
+    text-align: center;
+    margin: 8px 0; 
+    border-radius: 5px;
+    transition: background-color 0.2s;
+    width: 100%;
+}
+.logout-btn {
+    background-color: #dc3545; /* Merah untuk Logout */
+}
+.profile-btn:hover {
+    background-color: #0056b3;
+    color: white;
+}
+.logout-btn:hover {
+    background-color: #c82333;
+    color: white;
+}
 
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-        /* ----------------------------------------------- */
-        
-        #input-container { 
-            display: flex; 
-        }
-        #prompt-input { 
-            flex-grow: 1; 
-            padding: 0.75rem; 
-            border: 1px solid #ced4da; 
-            border-radius: 5px 0 0 5px; 
-            font-size: 1rem;
-        }
-        #send-button { 
-            padding: 0.75rem 1rem; 
-            background-color: #28a745; 
-            color: white; 
-            border: none; 
-            border-radius: 0 5px 5px 0; 
-            cursor: pointer; 
-            transition: background-color 0.2s; 
-        }
-        #send-button:hover:not(:disabled) { background-color: #218838; }
-        #send-button:disabled { background-color: #95d2a8; cursor: not-allowed; }
 
-        /* Media Queries */
-        @media (max-width: 768px) {
-            body { flex-direction: column; }
-            #sidebar {
-                width: 100%;
-                height: 20vh;
-                padding: 10px 0;
-                overflow-y: scroll;
-                flex-direction: row;
-                flex-wrap: nowrap;
-                white-space: nowrap;
-            }
-            #sidebar h2 { display: none; }
-            .chat-list {
-                display: flex;
-                overflow-x: auto;
-                overflow-y: hidden;
-                white-space: nowrap;
-            }
-            .chat-list-item {
-                border-bottom: none;
-                border-right: 1px solid #495057;
-                flex: 0 0 auto;
-                display: block; /* Kembalikan ke blok untuk mobile horizontal */
-            }
-            .chat-list-text {
-                white-space: normal;
-                overflow: visible;
-                text-overflow: clip;
-            }
-            .delete-chat-btn {
-                display: block;
-                margin-top: 5px;
-                margin-left: 0;
-            }
-            .container {
-                height: 80vh; 
-                padding: 1rem;
-            }
-            .logout-btn {
-                margin: 10px;
-                position: absolute;
-                top: 0;
-                right: 0;
-            }
-        }
-        @media (max-width: 480px) {
-            .container { padding: 0.75rem; }
-            .message { max-width: 90%; }
-            #input-container { flex-direction: row; }
-            #send-button { padding: 0.6rem 0.5rem; }
-            #prompt-input::placeholder { font-size: 0.85rem; }
-        }
+/* CSS untuk Chat List (tidak berubah secara fungsional) */
+.chat-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid #495057;
+    transition: background-color 0.15s;
+    font-size: 0.9rem;
+}
+.chat-list-item:hover, .chat-list-item.active {
+    background-color: #495057;
+}
+.chat-list-text {
+    flex-grow: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.delete-chat-btn {
+    background: none;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    margin-left: 10px;
+    font-size: 0.8rem;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+.delete-chat-btn:hover {
+    opacity: 1;
+    color: #ff4d4d;
+}
+
+/* ---------------------------------------------------------------- */
+/* MEDIA QUERIES UNTUK RESPONSIVITAS */
+/* Tampilan Ponsel (Max-width 768px) */
+@media (max-width: 768px) {
+    
+    /* Tampilkan tombol menu */
+    .menu-toggle {
+        display: block;
+    }
+
+    /* Sembunyikan sidebar secara default pada tampilan kecil */
+    #sidebar {
+        transform: translateX(-100%); /* Geser ke kiri, keluar layar */
+    }
+
+    /* Kelas yang ditambahkan via JS saat menu dibuka */
+    #sidebar.open {
+        transform: translateX(0); /* Geser masuk */
+    }
+    
+    /* Geser konten utama ke kiri dan hapus margin */
+    .container, .main-content {
+        margin-left: 0; /* Hapus margin kiri */
+        padding: 1rem;
+    }
+    
+    /* Responsivitas Konten Chat Khusus (index.php) */
+    .container {
+        height: 80vh; 
+        padding: 1rem;
+    }
+    /* Tombol logout/profil tidak perlu diatur di sini karena sudah di dalam fixed footer sidebar */
+}
+/* ---------------------------------------------------------------- */
+
+
+/* CSS untuk Chat Window (index.php) */
+#chat-window {
+    height: 70vh; 
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+}
+#input-container {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+#prompt-input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+}
+#send-button {
+    padding: 10px 20px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+#send-button:hover {
+    background-color: #0056b3;
+}
+.message {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    max-width: 80%;
+    word-wrap: break-word;
+    font-size: 0.95rem;
+}
+.message.user {
+    align-self: flex-end;
+    background-color: #d1e7dd; /* Hijau muda */
+    color: #0f5132;
+    border-top-right-radius: 0;
+}
+.message.gemini {
+    align-self: flex-start;
+    background-color: #f8d7da; /* Merah muda */
+    color: #842029;
+    border-top-left-radius: 0;
+}
+.message p:last-child {
+    margin-bottom: 0;
+}
+.typing-indicator {
+    display: inline-block;
+    width: 3px;
+    height: 3px;
+    background-color: #842029;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+    margin: 0 1px;
+}
+
+/* CSS KHUSUS UNTUK FORM (login.php, register.php) */
+.wrapper { width: 360px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+.wrapper h2 { text-align: center; color: #007bff; margin-bottom: 20px;}
+.form-group { margin-bottom: 15px; }
+.form-control { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; box-sizing: border-box; }
+.help-block { color: red; font-size: 0.9em; display: block; margin-top: 5px; }
+.btn-primary { 
+    width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;
+    transition: background-color 0.2s;
+}
+.btn-primary:hover { background-color: #0056b3; }
+p { text-align: center; margin-top: 15px; }

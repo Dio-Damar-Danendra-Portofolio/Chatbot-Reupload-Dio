@@ -55,12 +55,12 @@ if ($currentChatId) {
     }
 }
 
-$title = "Dio Damar's Chatbot - Selamat Datang, " . htmlspecialchars($_SESSION["username"]);
+$title = "Dio's Chatbot - Selamat Datang, " . htmlspecialchars($_SESSION["username"]); // Judul diubah
 
 // Tentukan path gambar profil. Gunakan default jika profile_picture kosong/tidak ada di sesi.
 $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION["profile_picture"])) 
                        ? htmlspecialchars($_SESSION["profile_picture"]) 
-                       : 'default_profile.png'; // Pastikan Anda memiliki file ini di folder 'uploads/'
+                       : 'default_profile.png'; 
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -74,32 +74,10 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="sidebar">
-        <div class="text-center">
-            <a href="index.php" style="text-decoration: none;">
-                <h1 class="fw-bold text-white">Dio's Chatbot</h1>
-            </a>
-        </div>
-        <a href="profile.php" class="profile-btn">Profil</a>
-            <a href="logout.php" class="logout-btn">Logout</a>
-            <ul class="chat-list">
-                <li class="chat-list-item <?= is_null($currentChatId) ? 'active' : ''; ?>" id="new-chat-btn" data-chat-id="null">
-                    <b>➕ Mulai Chat Baru</b>
-                </li>
-                <?php foreach ($chats as $chat_item): ?>
-                <li class="chat-list-item <?= ($chat_item['id'] == $currentChatId) ? 'active' : ''; ?>" 
-                    data-chat-id="<?= $chat_item['id']; ?>">
-                    <div class="chat-list-text">
-                        <?= $chat_item['title']; ?> 
-                        <small style="color: #bbb; display: block;"><?= date("M j, H:i", strtotime($chat_item['created_at'])); ?></small>
-                    </div>
-                    <button class="delete-chat-btn" data-chat-id="<?= $chat_item['id']; ?>" title="Hapus Chat">
-                        🗑️
-                    </button>
-                </li>
-                <?php endforeach; ?>
-            </ul>
-    </div>
+    <?php 
+    // Menggunakan sidebar_index.php yang sudah dimodifikasi
+    include "include/sidebar_index.php"; 
+    ?>
     <div class="container">
         <h1 class="fw-bold"><?= $title; ?></h1>
         <div id="chat-window"></div>
@@ -121,33 +99,28 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
 
         /**
          * FUNGSI BARU: Efek Pengetikan (Typing Effect)
-         * Menggunakan marked.parse() secara berkala untuk me-render Markdown saat mengetik.
          */
         function typeWriterEffect(element, text, delay = 25) {
             return new Promise(resolve => {
                 let i = 0;
                 
-                // Hapus konten awal (misalnya "Mengetik...")
                 element.innerHTML = ''; 
                 
                 function type() {
                     if (i < text.length) {
                         const char = text.charAt(i);
                         
-                        // Tambahkan karakter ke innerText untuk menjaga Markdown tetap mentah
                         element.textContent += char; 
                         
-                        // Render Markdown ke innerHTML setiap 15 karakter atau di akhir
+                        // Render Markdown setiap 15 karakter atau di akhir
                         if (i % 15 === 0 || i === text.length - 1) {
                             element.innerHTML = marked.parse(element.textContent);
                         }
 
                         i++;
-                        // Menggulir ke bawah saat karakter ditambahkan
                         chatWindow.scrollTop = chatWindow.scrollHeight;
                         setTimeout(type, delay);
                     } else {
-                        // Pastikan versi akhir adalah hasil parse Markdown
                         element.innerHTML = marked.parse(text); 
                         resolve();
                     }
@@ -158,7 +131,6 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
         
         /**
          * FUNGSI MODIFIKASI: addMessage
-         * Kini mengembalikan elemen DIV dan menerima parameter isTypingEffect.
          */
         function addMessage(text, sender, isTypingEffect = false) {
             const messageDiv = document.createElement('div');
@@ -166,27 +138,23 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
             
             if (sender === 'gemini') {
                 if (isTypingEffect) {
-                    // Tambahkan indikator loading yang akan di-overwrite oleh typeWriterEffect
                     messageDiv.innerHTML = '<span class="typing-indicator">...</span>'; 
                 } else {
-                    // Jika bukan efek mengetik (saat load history atau error)
                     messageDiv.innerHTML = marked.parse(text); 
                 }
             } else {
-                // Pesan User
                 messageDiv.innerText = text; 
             }
             
             chatWindow.appendChild(messageDiv);
             chatWindow.scrollTop = chatWindow.scrollHeight;
             
-            return messageDiv; // Kembalikan elemen baru
+            return messageDiv; 
         }
 
         function loadHistory(messages) {
             chatWindow.innerHTML = ''; 
             messages.forEach(msg => {
-                // Panggil addMessage normal untuk history
                 addMessage(msg.message_text, msg.sender, false); 
             });
         }
@@ -226,7 +194,9 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
                         
                         const newChatBtn = document.getElementById('new-chat-btn');
                         if (newChatBtn) {
-                            newChatBtn.classList.remove('active');
+                            // Hapus kelas 'active' dari tombol "Chat Baru" yang lama
+                            newChatBtn.classList.remove('active'); 
+                            // Sisipkan item baru setelah tombol "Chat Baru"
                             ul.insertBefore(newItem, newChatBtn.nextSibling); 
                         } else {
                             ul.appendChild(newItem);
@@ -262,7 +232,6 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
                     if (chatListItem) {
                         const titleTextElement = chatListItem.querySelector('.chat-list-text');
                         const now = new Date();
-                        // Format waktu yang sederhana
                         const formattedTime = now.toLocaleTimeString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(' at ', ', '); 
                         titleTextElement.innerHTML = `${data.title} <small style="color: #bbb; display: block;">${formattedTime}</small>`;
                     } 
@@ -277,7 +246,6 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
 
         /**
          * FUNGSI MODIFIKASI UTAMA: sendMessage
-         * Menggunakan elemen placeholder dan typeWriterEffect.
          */
         async function sendMessage() {
             const prompt = promptInput.value.trim();
@@ -351,6 +319,15 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
         });
         
         function setupSidebarListeners(element) {
+            // Hapus kelas 'active' dari semua item kecuali yang baru diklik
+            document.querySelectorAll('.chat-list-item').forEach(li => {
+                 li.addEventListener('click', () => {
+                     document.querySelectorAll('.chat-list-item').forEach(item => item.classList.remove('active'));
+                     li.classList.add('active');
+                 });
+            });
+            
+            // Logika untuk pengalihan halaman
             (element ? [element] : document.querySelectorAll('.chat-list-item')).forEach(li => {
                 if (!element || !li.dataset.listenerAdded) {
                     li.addEventListener('click', (e) => {
@@ -379,6 +356,30 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
             });
         }
         setupSidebarListeners();
+
+        // LOGIKA RESPONSIVITAS 
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuToggle = document.getElementById('menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+
+            if (menuToggle && sidebar) {
+                menuToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('open');
+                });
+                
+                // Tutup sidebar saat item chat/menu utama diklik
+                document.querySelectorAll('.chat-list-item, .main-menu-item a, .profile-btn, .logout-btn').forEach(item => {
+                    item.addEventListener('click', () => {
+                        if (window.innerWidth <= 768) {
+                            // Beri sedikit delay agar pengalihan halaman terjadi setelah sidebar tertutup
+                            setTimeout(() => {
+                                sidebar.classList.remove('open');
+                            }, 50);
+                        }
+                    });
+                });
+            }
+        });
     </script>
 </body>
 </html>

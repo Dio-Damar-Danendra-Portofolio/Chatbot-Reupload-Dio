@@ -28,8 +28,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     
     // Validasi Email (Mirip dengan username)
-    // ... (Logika validasi email di sini)
-    $email = trim($_POST["email"]);
+    // Cek apakah email sudah ada
+    if (empty(trim($_POST["email"]))) {
+        $email_err = "Masukkan email.";
+    } elseif (!filter_var(trim($_POST["email"]), FILTER_VALIDATE_EMAIL)) {
+        $email_err = "Format email tidak valid.";
+    } else {
+        $sql = "SELECT id FROM users WHERE email = ?";
+        if ($stmt = $conn->prepare($sql)) {
+            $stmt->bind_param("s", $param_email);
+            $param_email = trim($_POST["email"]);
+            if ($stmt->execute()) {
+                $stmt->store_result();
+                if ($stmt->num_rows == 1) {
+                    $email_err = "Email ini sudah terdaftar.";
+                } else {
+                    $email = trim($_POST["email"]);
+                }
+            }
+            $stmt->close();
+        }
+    }
 
     // Validasi Password
     if (empty(trim($_POST["password"]))) {
@@ -41,52 +60,60 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     
     // Validasi Phone Number
-    $phone_number = trim($_POST["phone_number"]);
-
-    // Cek error input sebelum memasukkan ke database
+    if (empty(trim($_POST["phone_number"]))) {
+        $phone_err = "Masukkan nomor telepon.";
+    } else {
+        $phone_number = trim($_POST["phone_number"]);
+    }
+    
+    // Cek error input sebelum insert ke database
     if (empty($username_err) && empty($email_err) && empty($password_err) && empty($phone_err)) {
-        
-        // Hash password sebelum disimpan
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         
         $sql = "INSERT INTO users (username, email, password, phone_number) VALUES (?, ?, ?, ?)";
          
         if ($stmt = $conn->prepare($sql)) {
-            $stmt->bind_param("ssss", $username, $email, $hashed_password, $phone_number);
+            $stmt->bind_param("ssss", $param_username, $param_email, $param_password, $param_phone);
+            
+            // Set parameter
+            $param_username = $username;
+            $param_email = $email;
+            $param_password = password_hash($password, PASSWORD_DEFAULT); // Hash password
+            $param_phone = $phone_number;
             
             if ($stmt->execute()) {
-                // Redirect ke halaman login setelah pendaftaran berhasil
+                // Berhasil register, redirect ke login page
                 header("location: login.php");
                 exit;
             } else {
                 echo "Terjadi kesalahan. Silakan coba lagi nanti.";
             }
+
             $stmt->close();
-        }
+        }        
     }
     
     $conn->close();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Register - Dio Damar's Chatbot</title>
-    <link rel="stylesheet" href="style.css"> <style>
-        /* CSS KHUSUS UNTUK FORM (Anda bisa tambahkan dari bagian .container dan body CSS di index.html) */
-        body { background-color: #00b0ff; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    <style>
+        /* CSS KHUSUS UNTUK FORM (Sama seperti login.php) */
+        body { background-color: #00b0ff; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }
         .wrapper { width: 360px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-        .wrapper h2 { text-align: center; color: #007bff; }
+        .wrapper h2 { text-align: center; color: #007bff; margin-bottom: 20px;}
         .form-group { margin-bottom: 15px; }
         .form-control { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; box-sizing: border-box; }
-        .help-block { color: red; font-size: 0.9em; }
+        .help-block { color: red; font-size: 0.9em; display: block; margin-top: 5px; }
         .btn-primary { 
-            width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;
+            width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;
             transition: background-color 0.2s;
         }
-        .btn-primary:hover { background-color: #218838; }
+        .btn-primary:hover { background-color: #0056b3; }
+        p { text-align: center; margin-top: 15px; }
     </style>
 </head>
 <body>

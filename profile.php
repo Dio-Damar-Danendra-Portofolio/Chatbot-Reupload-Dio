@@ -43,48 +43,58 @@ if ($stmt = $conn->prepare($sql)) {
                 $created_at = $row["created_at"];
             }
         } else {
-            // User tidak ditemukan
-            $error = "Pengguna tidak ditemukan.";
+            $error = "Data pengguna tidak ditemukan.";
         }
     } else {
-        // Error eksekusi query
-        $error = "Terjadi kesalahan saat mengambil data: " . $conn->error;
+        $error = "Kesalahan database saat mengeksekusi query.";
     }
-
+    
     // Tutup statement
-    $stmt->close(); 
+    $stmt->close();
 } else {
-    // Penanganan error jika prepare gagal
-    $error = "Gagal mempersiapkan query: " . $conn->error;
+    $error = "Gagal mempersiapkan query.";
 }
+
+// Tentukan path gambar profil.
+$profile_pic_filename = (!empty($profile_picture)) 
+                       ? htmlspecialchars('uploads/' . $profile_picture) 
+                       : 'uploads/default_profile.png'; 
+
+// Tutup koneksi (jika tidak ada query lain yang akan dijalankan)
+// $conn->close();
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil dari <?php echo htmlspecialchars($username); ?></title>
+    <title>Profil Pengguna - <?= htmlspecialchars($username); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="style.css"> 
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* CSS untuk memastikan konten utama berada di kanan sidebar pada desktop */
+        .main-content {
+            margin-left: 280px;
+            padding-top: 20px;
+        }
+    </style>
 </head>
 <body>
     <?php include "include/sidebar.php"; ?>
     
-    <div class="main-content container-fluid p-4">
+    <div class="main-content container-fluid">
         <h3 class="page-header text-dark fw-bold mb-4 text-center">Profil Pengguna</h3>
         
         <?php if (!empty($error)): ?>
-            <div class="alert alert-danger" role="alert">
-                <?php echo $error; ?>
-            </div>
+            <div class="alert alert-danger text-center"><?php echo $error; ?></div>
         <?php else: ?>
-            <div class="card shadow-sm">
-                <div class="card-header bg-warning text-white profile-header-container text-center">
-                    <div class="profile-picture-placeholder">
-                        <img src="uploads/<?php echo htmlspecialchars($profile_picture); ?>" class="img-fluid mb-3 rounded-circle shadow mt-2" style="max-width: 250px; width: 100%; height: auto; object-fit: cover;" alt="Profile Picture"/>
-                    </div>
+            <div class="card shadow-lg mx-auto" style="max-width: 600px;">
+                <div class="card-header text-center bg-success text-white">
+                    <img src="<?php echo $profile_pic_filename; ?>" alt="Foto Profil" class="img-thumbnail rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
                 </div>
-                <div class="card-body pt-5">                    
+                
+                <div class="card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label text-muted">Username:</label>
@@ -105,13 +115,41 @@ if ($stmt = $conn->prepare($sql)) {
                     
                 </div>
                 <div class="card-footer text-end">
-                    <a class="btn btn-primary" style="text-decoration: none;" href="edit-profil.php">Edit Profil</a>
-                    <a class="btn btn-secondary" style="text-decoration: none;" href="ganti-password.php">Ubah Kata Sandi</a>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <a class="btn btn-primary" style="text-decoration: none;" href="edit-profil.php">Edit Profil</a>
+                        </div>
+                        <div class="col-lg-6">
+                            <a class="btn btn-secondary" style="text-decoration: none;" href="ganti-password.php">Ubah Kata Sandi</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         <?php endif; ?>
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuToggle = document.getElementById('menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+
+            if (menuToggle && sidebar) {
+                menuToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('open');
+                });
+                
+                // Tutup sidebar saat mengklik tombol Profil atau Logout
+                document.querySelectorAll('.profile-btn, .logout-btn').forEach(btn => {
+                     btn.addEventListener('click', () => {
+                        if (window.innerWidth <= 768) {
+                            sidebar.classList.remove('open');
+                        }
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 </html>

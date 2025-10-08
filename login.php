@@ -14,15 +14,14 @@ $email_err = $password_err = $login_err = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    // Validasi EMAIL (Ganti validasi Username)
+    // Validasi EMAIL
     if (empty(trim($_POST["email"]))) {
         $email_err = "Masukkan alamat email.";
     } else {
-        // Ambil input email
         $email = trim($_POST["email"]);
     }
     
-    // Validasi Password (TETAP SAMA)
+    // Validasi Password
     if (empty(trim($_POST["password"]))) {
         $password_err = "Masukkan password.";
     } else {
@@ -30,16 +29,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Cek error input
-    // Cek $email_err dan $password_err
     if (empty($email_err) && empty($password_err)) {
-        // UBAH: Ambil id, username, dan password berdasarkan kolom 'email'
-        $sql = "SELECT id, username, password FROM users WHERE email = ?";
+        // UBAH: Ambil id, username, password, dan profile_picture berdasarkan kolom 'email'
+        $sql = "SELECT id, username, password, profile_picture FROM users WHERE email = ?";
         
-        // PENGGUNAAN $conn (mysqli)
         if ($stmt = $conn->prepare($sql)) {
-            // Ikat parameter: bind_param untuk mysqli. 's' untuk string (email)
             $stmt->bind_param("s", $param_email);
-            // Ganti $param_username menjadi $param_email
             $param_email = $email;
             
             if ($stmt->execute()) {
@@ -47,18 +42,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 
                 // Cek apakah email ada, jika ya, verifikasi password
                 if ($stmt->num_rows == 1) {             
-                    // Ambil hasil: kolom id, username, dan password
-                    $stmt->bind_result($id, $username, $hashed_password);
+                    // Ambil hasil
+                    $stmt->bind_result($id, $username, $hashed_password, $profile_picture);
                     if ($stmt->fetch()) {
                         if (password_verify($password, $hashed_password)) {
                             // Password benar, mulai sesi baru
-                            // session_start(); // Baris ini sudah ada di config.php
                             
-                            // Simpan data di variabel sesi
+                            // Simpan data di variabel sesi (TERMASUK profile_picture)
                             $_SESSION["loggedin"] = true;
                             $_SESSION["id"] = $id;
-                            // PENTING: Simpan USERNAME yang diambil dari database
-                            $_SESSION["username"] = $username;               
+                            $_SESSION["username"] = $username;  
+                            $_SESSION["profile_picture"] = $profile_picture;              
+
                             
                             // Redirect ke halaman chat
                             header("location: index.php");
@@ -91,17 +86,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>Login - Dio Damar's Chatbot</title>
     <style>
         /* CSS KHUSUS UNTUK FORM (Sama seperti register.php) */
-        body { background-color: #00b0ff; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        body { background-color: #00b0ff; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }
         .wrapper { width: 360px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-        .wrapper h2 { text-align: center; color: #007bff; }
+        .wrapper h2 { text-align: center; color: #007bff; margin-bottom: 20px;}
         .form-group { margin-bottom: 15px; }
         .form-control { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; box-sizing: border-box; }
-        .help-block { color: red; font-size: 0.9em; }
+        .help-block { color: red; font-size: 0.9em; display: block; margin-top: 5px; }
         .btn-primary { 
             width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;
             transition: background-color 0.2s;
         }
         .btn-primary:hover { background-color: #0056b3; }
+        p { text-align: center; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -109,12 +105,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <h2>Login Akun</h2>
         <?php 
         if (!empty($login_err)) {
-            echo '<div class="alert alert-danger" style="color: red; text-align: center;">' . $login_err . '</div>';
-        }      
+            echo '<div class="alert alert-danger" style="color: red; text-align: center; margin-bottom: 15px;">' . $login_err . '</div>';
+        }       
         ?>
 
         <form action="<?= htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
-            <div class="form-group <?= (!empty($email_err)) ? 'has-error' : ''; ?>"> <label>Email</label> <input type="text" name="email" class="form-control" value="<?= htmlspecialchars($email); ?>"> <span class="help-block"><?= $email_err; ?></span> </div>  
+            <div class="form-group <?= (!empty($email_err)) ? 'has-error' : ''; ?>"> 
+                <label>Email</label> 
+                <input type="text" name="email" class="form-control" value="<?= htmlspecialchars($email); ?>"> 
+                <span class="help-block"><?= $email_err; ?></span> 
+            </div>  
             <div class="form-group <?= (!empty($password_err)) ? 'has-error' : ''; ?>">
                 <label>Password</label>
                 <input type="password" name="password" class="form-control">
