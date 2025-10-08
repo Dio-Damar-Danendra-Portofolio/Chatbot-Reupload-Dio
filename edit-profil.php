@@ -182,7 +182,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <?php include "include/sidebar.php"; ?>
     
     <div class="main-content container-fluid">
-        <h3 class="page-header text-dark fw-bold mb-4 text-center"><?= $title; ?></h3>
+        <h1 class="page-header text-dark fw-bold mb-4 text-center"><?= $title; ?></h1>
         <div class="card shadow-lg mx-auto" style="max-width: 600px;">
             <div class="card-body">
                 <?php if (!empty($success_msg)): ?>
@@ -220,10 +220,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <span class="help-block text-danger"><?= $file_err; ?></span>
                     </div> 
                     <div class="row">
-                        <div class="col-lg-6">
-                            <a href="profile.php" class="btn btn-secondary me-md-2">Batalkan Perubahan</a>
+                        <div class="col-lg-6 d-grid gap-2 mb-2 mb-md-0">
+                            <a href="profile.php" class="btn btn-secondary">Batalkan Perubahan</a>
                         </div>
-                        <div class="col-lg-6">
+                        <div class="col-lg-6 d-grid gap-2">
                             <input type="submit" class="btn btn-success" value="Simpan Perubahan">
                         </div>
                     </div>

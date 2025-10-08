@@ -110,7 +110,7 @@ if (isset($_POST["simpan"])) {
     <body>
         <?php include "include/sidebar.php"; ?>
         <div class="main-content container-fluid p-4">
-            <h3 class="page-header text-dark fw-bold mb-4 text-center"><?= $title; ?></h3>
+            <h1 class="page-header text-dark fw-bold mb-4 text-center"><?= $title; ?></h1>
             <div class="card shadow-lg">
                 <div class="card-header text-center bg-white">
                     <?php 
@@ -137,14 +137,14 @@ if (isset($_POST["simpan"])) {
                         </div>
                         <div class="row">
                             <div class="col-md-6 form-group">
-                                <label for="new_password" class="form form-label fw-bold">Password Baru:</label>
+                                <label for="new_password" class="form form-label fw-bold">Password Baru</label>
                                 <input class="form-control" type="password" name="new_password" id="new_password" required>
                                 <?php if (!empty($new_password_err)): ?>
                                     <span class="help-block"><?= $new_password_err; ?></span>
                                 <?php endif; ?>
                             </div>
                             <div class="col-md-6 form-group">
-                                <label for="new_password_confirmation" class="form form-label fw-bold">Konfirmasi Password Baru:</label>
+                                <label for="new_password_confirmation" class="form form-label fw-bold">Konfirmasi Password Baru</label>
                                 <input class="form-control" type="password" name="new_password_confirmation" id="new_password_confirmation" required>
                                 <?php if (!empty($confirm_password_err)): ?>
                                     <span class="help-block"><?= $confirm_password_err; ?></span>
@@ -155,7 +155,7 @@ if (isset($_POST["simpan"])) {
                     <div class="card-footer">
                         <div class="row">
                             <div class="col-md-6 d-grid gap-2 mb-2 mb-md-0">
-                                <a href="profile.php" class="btn btn-secondary">Batal</a>
+                                <a href="profile.php" class="btn btn-secondary">Batalkan Perubahan</a>
                             </div>
                             <div class="col-md-6 d-grid gap-2">
                                 <button type="submit" class="btn btn-success" name="simpan">Simpan Perubahan</button>
