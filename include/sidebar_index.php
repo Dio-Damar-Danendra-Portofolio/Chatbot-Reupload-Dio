@@ -1,9 +1,9 @@
-<button class="menu-toggle" id="menu-toggle">☰</button>
 <div id="sidebar">
     <div class="text-center sidebar-header">
         <a href="index.php" style="text-decoration: none;">
             <h1 class="fw-bold text-white">Dio's Chatbot</h1> 
         </a>
+        <button class="menu-toggle" id="menu-toggle">☰</button>
     </div>
 
     <ul class="main-menu">
