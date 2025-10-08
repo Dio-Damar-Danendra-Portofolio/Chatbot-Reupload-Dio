@@ -114,7 +114,7 @@ $profile_pic_filename = (!empty($profile_picture))
                     </div>
                     
                 </div>
-                <div class="card-footer text-end">
+                <div class="card-footer">
                     <div class="row">
                         <div class="col-lg-6 d-grid gap-2 mb-2 mb-md-0">
                             <a class="btn btn-primary" style="text-decoration: none;" href="edit-profil.php">Edit Profil</a>
