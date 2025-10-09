@@ -14,6 +14,21 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
 
 $userId = $_SESSION["id"];
 
+$profile_picture = null;
+$target_dir = "uploads/"; // Asumsi folder upload berada di root
+$sql_user = "SELECT profile_picture FROM users WHERE id = ?";
+
+if ($stmt_user = $conn->prepare($sql_user)) {
+    $stmt_user->bind_param("i", $userId);
+    $stmt_user->execute();
+    $result_user = $stmt_user->get_result();
+    if ($row_user = $result_user->fetch_assoc()) {
+        // $profile_picture akan berisi nama file gambar
+        $profile_picture = $row_user['profile_picture']; 
+    }
+    $stmt_user->close();
+}
+
 // LOGIKA: Cek dari URL dulu, lalu dari SESSION
 if (isset($_GET['chat_id']) && is_numeric($_GET['chat_id'])) {
     $currentChatId = (int)$_GET['chat_id'];
