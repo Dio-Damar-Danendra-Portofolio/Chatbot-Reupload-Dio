@@ -3,7 +3,7 @@
                     ? $target_dir . htmlspecialchars($profile_picture) 
                     : 'assets/default_profile.png'; // Ganti dengan path gambar default Anda jika ada
 ?>
-<button class="menu-toggle" id="menu-toggle" style="background-color: #343a40; border: 2px solid orange;">☰</button>
+<button class="menu-toggle" id="menu-toggle">☰</button>
 <div id="sidebar">
     <div class="text-center sidebar-header">
         <a href="index.php" style="text-decoration: none;">

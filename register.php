@@ -115,24 +115,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .btn-primary:hover { background-color: #0056b3; }
         p { text-align: center; margin-top: 15px; }
     </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> 
 </head>
 <body>
     <div class="wrapper">
         <h2>Register Akun</h2>
         <p>Silakan isi formulir ini untuk membuat akun.</p>
         <form action="<?= htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
-            <div class="form-group">
-                <label>Username</label>
+            <div class="form-group fw-bold">
+                <label class="form-label">Username</label>
                 <input type="text" name="username" class="form-control" value="<?= $username; ?>">
                 <span class="help-block"><?= $username_err; ?></span>
             </div>    
-            <div class="form-group">
-                <label>Email</label>
+            <div class="form-group fw-bold">
+                <label class="form-label">Email</label>
                 <input type="email" name="email" class="form-control" value="<?= $email; ?>">
                 <span class="help-block"><?= $email_err; ?></span>
             </div>
-            <div class="form-group">
-                <label>Password</label>
+            <div class="form-group fw-bold">
+                <label class="form-label">Password</label>
                 <input type="password" name="password" class="form-control">
                 <span class="help-block"><?= $password_err; ?></span>
             </div>
