@@ -54,6 +54,60 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+/* ... (CSS yang sudah ada) */
+
+/* MODIFIKASI CSS UNTUK INPUT FILE */
+#input-container {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    align-items: center; /* Tambahkan ini agar semua elemen sejajar vertikal */
+}
+
+#file-input {
+    /* Gaya untuk membuat input file lebih ringkas */
+    max-width: 150px; 
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    padding: 5px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+/* Styling untuk pratinjau file */
+#file-preview-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #343a40;
+}
+#clear-file {
+    font-weight: bold;
+}
+
+/* Styling untuk lampiran di dalam pesan user */
+.message.user .file-attachment {
+    border: 1px solid #a3cfb3;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    background-color: #f1fcf5;
+    max-width: 100%;
+}
+
+.message.user .file-attachment img,
+.message.user .file-attachment video {
+    max-height: 200px; /* Batasi tinggi pratinjau media */
+    width: auto;
+    display: block;
+}
+
+/* ... (Sisa CSS tetap sama) */
+
 .profile-picture-container {
     text-align: center;
     padding: 15px 0; 
@@ -233,14 +287,7 @@ body {
     display: flex;
     flex-direction: column;
 }
-#input-container {
-    display: flex;
-    gap: 10px;
-    padding: 10px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-}
+
 #prompt-input {
     flex-grow: 1;
     padding: 10px;
@@ -304,3 +351,4 @@ body {
 }
 .btn-primary:hover { background-color: #0056b3; }
 p { text-align: center; margin-top: 15px; }
+}

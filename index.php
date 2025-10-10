@@ -1,5 +1,5 @@
 <?php 
-require_once 'config.php';
+require_once 'config.php'; // Pastikan file config.php ada dan terhubung ke DB
 
 // Pastikan sesi sudah dimulai
 if (session_status() == PHP_SESSION_NONE) {
@@ -15,7 +15,7 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
 $userId = $_SESSION["id"];
 
 $profile_picture = null;
-$target_dir = "uploads/"; // Asumsi folder upload berada di root
+$target_dir = "uploads/"; 
 $sql_user = "SELECT profile_picture FROM users WHERE id = ?";
 
 if ($stmt_user = $conn->prepare($sql_user)) {
@@ -23,7 +23,6 @@ if ($stmt_user = $conn->prepare($sql_user)) {
     $stmt_user->execute();
     $result_user = $stmt_user->get_result();
     if ($row_user = $result_user->fetch_assoc()) {
-        // $profile_picture akan berisi nama file gambar
         $profile_picture = $row_user['profile_picture']; 
     }
     $stmt_user->close();
@@ -36,11 +35,10 @@ if (isset($_GET['chat_id']) && is_numeric($_GET['chat_id'])) {
 } else if (isset($_SESSION['current_chat_id'])) {
     $currentChatId = $_SESSION['current_chat_id'];
 } else {
-    // Biarkan $currentChatId tetap null jika belum ada sesi chat
     $currentChatId = null;
 }
 
-// 1. Ambil SEMUA riwayat chat untuk sidebar
+// 1. Ambil riwayat chat untuk sidebar
 $chats = [];
 $sql_chats = "SELECT id, title, created_at FROM chats WHERE user_id = ? ORDER BY created_at DESC";
 if ($stmt_chats = $conn->prepare($sql_chats)) {
@@ -48,7 +46,6 @@ if ($stmt_chats = $conn->prepare($sql_chats)) {
     $stmt_chats->execute();
     $result_chats = $stmt_chats->get_result();
     while ($row = $result_chats->fetch_assoc()) {
-        // Sanitasi judul sebelum disimpan ke array
         $row['title'] = htmlspecialchars($row['title']); 
         $chats[] = $row;
     }
@@ -58,7 +55,8 @@ if ($stmt_chats = $conn->prepare($sql_chats)) {
 // 2. Ambil pesan untuk chat yang sedang aktif (jika ada)
 $current_chat_messages = [];
 if ($currentChatId) {
-    $sql_messages = "SELECT sender, message_text FROM messages WHERE chat_id = ? ORDER BY created_at ASC";
+    // **PENTING: Query ini mengambil 'file_data' untuk multimodalitas**
+    $sql_messages = "SELECT sender, message_text, file_data FROM messages WHERE chat_id = ? ORDER BY created_at ASC"; 
     if ($stmt_messages = $conn->prepare($sql_messages)) {
         $stmt_messages->bind_param("i", $currentChatId);
         $stmt_messages->execute();
@@ -70,9 +68,8 @@ if ($currentChatId) {
     }
 }
 
-$title = "Dio's Chatbot - Selamat Datang, " . htmlspecialchars($_SESSION["username"]); // Judul diubah
+$title = "Dio's Chatbot - Selamat Datang, " . htmlspecialchars($_SESSION["username"]); 
 
-// Tentukan path gambar profil. Gunakan default jika profile_picture kosong/tidak ada di sesi.
 $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION["profile_picture"])) 
                        ? htmlspecialchars($_SESSION["profile_picture"]) 
                        : 'default_profile.png'; 
@@ -90,44 +87,100 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
 </head>
 <body>
     <?php 
-    // Menggunakan sidebar_index.php yang sudah dimodifikasi
+    // Pastikan file sidebar_index.php ada
     include "include/sidebar_index.php"; 
     ?>
     <div class="container">
         <h1 class="fw-bold"><?= $title; ?></h1>
         <div id="chat-window"></div>
+        
+        <div id="file-preview-container" style="display: none;">
+            <span id="preview-text"></span>
+            <button id="clear-file" title="Hapus File Unggahan">❌</button>
+        </div>
+
         <div id="input-container">
+            <label for="file-input" id="file-label" title="Unggah file (Audio, Video, Foto, Dokumen)">
+                 📎
+            </label>
+            <input type="file" id="file-input" accept="image/*,video/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+            
             <input type="text" id="prompt-input" placeholder="Ketik pesan Anda di sini...">
             <button id="send-button">Kirim</button>
         </div>
+        
     </div>
     <script>
         const chatWindow = document.getElementById("chat-window");
         const promptInput = document.getElementById("prompt-input");
         const sendButton = document.getElementById("send-button");
+        const fileInput = document.getElementById("file-input"); 
+        const fileLabel = document.getElementById("file-label");
+        const filePreviewContainer = document.getElementById("file-preview-container"); 
+        const previewText = document.getElementById("preview-text"); 
+        const clearFileButton = document.getElementById("clear-file"); 
+
         const SERVER_URL = 'http://localhost:3000/chat';
         const TITLE_URL = 'http://localhost:3000/chat/title'; 
-        const NEW_CHAT_URL = 'save_new_chat.php'; 
+        const NEW_CHAT_URL = 'save_new_chat.php'; // Ganti jika nama file berbeda
         
         let currentChatId = <?= json_encode($currentChatId); ?>;
+        // Riwayat pesan dari database dimuat di sini untuk kesinambungan chat
         const initialMessages = <?= json_encode($current_chat_messages); ?>;
-
-        /**
-         * FUNGSI BARU: Efek Pengetikan (Typing Effect)
-         */
+        
+        // --- Fungsi Base64, Pratinjau File, dan Handler ---
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) return resolve(null);
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64Data = reader.result.split(',')[1];
+                    resolve({ data: base64Data, mimeType: file.type });
+                };
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function showFilePreview(file) {
+            const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+            previewText.textContent = `File dipilih: ${file.name} (${sizeMB} MB)`;
+            filePreviewContainer.style.display = 'flex';
+        }
+        
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const maxSize = 25 * 1024 * 1024; // 25MB
+                if (file.size > maxSize) {
+                    alert('File terlalu besar. Maksimal 25MB.');
+                    fileInput.value = ''; 
+                    filePreviewContainer.style.display = 'none';
+                    return;
+                }
+                showFilePreview(file);
+            } else {
+                filePreviewContainer.style.display = 'none';
+            }
+        });
+        
+        clearFileButton.addEventListener('click', () => {
+            fileInput.value = ''; 
+            filePreviewContainer.style.display = 'none';
+            promptInput.focus();
+        });
+        
+        // --- Efek Pengetikan dan Rendering Markdown ---
         function typeWriterEffect(element, text, delay = 25) {
             return new Promise(resolve => {
                 let i = 0;
-                
                 element.innerHTML = ''; 
                 
                 function type() {
                     if (i < text.length) {
                         const char = text.charAt(i);
-                        
                         element.textContent += char; 
                         
-                        // Render Markdown setiap 15 karakter atau di akhir
                         if (i % 15 === 0 || i === text.length - 1) {
                             element.innerHTML = marked.parse(element.textContent);
                         }
@@ -144,39 +197,77 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
             });
         }
         
-        /**
-         * FUNGSI MODIFIKASI: addMessage
-         */
-        function addMessage(text, sender, isTypingEffect = false) {
+        // --- Rendering File di Jendela Chat ---
+        function renderFilePreview(fileData) {
+             if (!fileData) return '';
+             try {
+                const data = JSON.parse(fileData); 
+                const type = data.mimeType.split('/')[0];
+                const base64Url = `data:${data.mimeType};base64,${data.data}`;
+                
+                let html = '<div class="file-attachment">';
+                
+                if (type === 'image') {
+                    html += `<img src="${base64Url}" alt="Attached Image">`;
+                } else if (type === 'video') {
+                    html += `<video controls src="${base64Url}"></video>`;
+                } else if (type === 'audio') {
+                    html += `<audio controls src="${base64Url}"></audio>`;
+                } else {
+                    html += `<p class="file-info">📎 File: ${data.mimeType} <a href="${base64Url}" download="file_chat">Unduh</a></p>`;
+                }
+                
+                html += '</div>';
+                return html;
+            } catch (e) {
+                console.error("Gagal render file preview:", e);
+                return '';
+            }
+        }
+        
+        // --- Penambahan Pesan ke Chat Window ---
+        function addMessage(text, sender, isTypingEffect = false, fileData = null) { 
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
             
-            if (sender === 'gemini') {
-                if (isTypingEffect) {
-                    messageDiv.innerHTML = '<span class="typing-indicator">...</span>'; 
-                } else {
-                    messageDiv.innerHTML = marked.parse(text); 
-                }
-            } else {
-                messageDiv.innerText = text; 
+            if (sender === 'user' && fileData) { 
+                messageDiv.innerHTML += renderFilePreview(fileData);
             }
             
+            const textContent = document.createElement('div');
+            textContent.className = 'message-text-content';
+
+            if (sender === 'gemini') {
+                if (isTypingEffect) {
+                    textContent.innerHTML = '<span class="typing-indicator">...</span>'; 
+                } else {
+                    textContent.innerHTML = marked.parse(text); 
+                }
+            } else {
+                textContent.innerHTML = text; 
+            }
+            
+            messageDiv.appendChild(textContent);
             chatWindow.appendChild(messageDiv);
             chatWindow.scrollTop = chatWindow.scrollHeight;
             
-            return messageDiv; 
+            return textContent;
         }
 
         function loadHistory(messages) {
             chatWindow.innerHTML = ''; 
             messages.forEach(msg => {
-                addMessage(msg.message_text, msg.sender, false); 
+                // Catatan: file_data di history adalah string JSON dari PHP
+                addMessage(msg.message_text, msg.sender, false, msg.file_data); 
             });
         }
         
+        // Memuat riwayat chat saat halaman pertama dimuat
         loadHistory(initialMessages);
 
+        // --- Logika Chat Baru dan Judul (Sama dengan kode sebelumnya) ---
         async function createNewChat() {
+            // ... (Fungsi createNewChat)
             console.log("Membuat chat baru di database...");
             try {
                 const response = await fetch(NEW_CHAT_URL, {
@@ -190,7 +281,6 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
                     currentChatId = data.chatId;
                     console.log("Chat baru berhasil dibuat. ID:", currentChatId);
 
-                    // Tambahkan LI baru di sidebar (DOM Update)
                     const ul = document.querySelector('.chat-list');
                     if (ul) {
                         const newItem = document.createElement('li');
@@ -209,9 +299,7 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
                         
                         const newChatBtn = document.getElementById('new-chat-btn');
                         if (newChatBtn) {
-                            // Hapus kelas 'active' dari tombol "Chat Baru" yang lama
                             newChatBtn.classList.remove('active'); 
-                            // Sisipkan item baru setelah tombol "Chat Baru"
                             ul.insertBefore(newItem, newChatBtn.nextSibling); 
                         } else {
                             ul.appendChild(newItem);
@@ -230,6 +318,7 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
         }
         
         async function generateChatTitle(chatId, userMessage, geminiResponse) {
+            // ... (Fungsi generateChatTitle)
             console.log("Membuat judul chat...");
             try {
                 const response = await fetch(TITLE_URL, {
@@ -258,19 +347,32 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
                 console.error("Network error saat membuat judul:", error);
             }
         }
-
-        /**
-         * FUNGSI MODIFIKASI UTAMA: sendMessage
-         */
+        
+        // --- Fungsi Kirim Pesan (sendMessage) ---
         async function sendMessage() {
             const prompt = promptInput.value.trim();
-            if (!prompt) return;
+            const uploadedFile = fileInput.files.length > 0 ? fileInput.files[0] : null;
 
-            // 1. Tambahkan pesan user
-            addMessage(prompt, 'user');
-            promptInput.value = '';
+            if (!prompt && !uploadedFile) return;
+            
             sendButton.disabled = true;
 
+            let fileDataToSend = null;
+            let tempFileJson = null;
+
+            if (uploadedFile) {
+                fileDataToSend = await fileToBase64(uploadedFile);
+                // Penting: Konversi fileDataToSend (Object) ke JSON String untuk ditampilkan di frontend
+                tempFileJson = JSON.stringify(fileDataToSend);
+            }
+
+            // Pesan pengguna ditampilkan di jendela chat
+            addMessage(prompt, 'user', false, tempFileJson);
+            
+            promptInput.value = '';
+            fileInput.value = ''; 
+            filePreviewContainer.style.display = 'none'; 
+            
             const isFirstMessage = (currentChatId === null);
 
             if (isFirstMessage) {
@@ -281,15 +383,14 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
                 }
             }
             
-            // 2. TAMBAHKAN PENAMPUNG PESAN GEMINI UNTUK ANIMASI
             const geminiMessageElement = addMessage("Mengetik...", 'gemini', true); 
-            
             let geminiText = '';
             
             try {
                 const requestBody = JSON.stringify({ 
                     message: prompt,
-                    chatId: currentChatId 
+                    chatId: currentChatId, // Mengirim ID chat yang valid (penting untuk history)
+                    fileData: fileDataToSend 
                 });
 
                 const response = await fetch(SERVER_URL, {
@@ -302,9 +403,7 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
 
                 if (response.ok && data && data.text) {
                     geminiText = data.text;
-                    
-                    // 3. PANGGIL EFEK PENGETIKAN
-                    await typeWriterEffect(geminiMessageElement, geminiText, 25); // 25ms delay per karakter
+                    await typeWriterEffect(geminiMessageElement, geminiText, 25); 
 
                     if (isFirstMessage) {
                         await generateChatTitle(currentChatId, prompt, geminiText);
@@ -312,13 +411,11 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
 
                 } else {
                     const errorMessage = data.error || 'Terjadi kesalahan tidak dikenal di server.';
-                    // Jika ada error, ganti konten elemen dengan pesan error.
                     geminiMessageElement.innerHTML = marked.parse(`❌ ERROR SERVER (${response.status}): ${errorMessage}`); 
                 }
 
             } catch (error) {
                 console.error("Network or Fetch Error:", error);
-                // Jika ada error jaringan, ganti konten elemen dengan pesan error.
                 geminiMessageElement.innerHTML = marked.parse("Kesalahan jaringan. Pastikan server (Node.js) berjalan di port 3000.");
             } finally {
                 sendButton.disabled = false;
@@ -333,8 +430,8 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
             }
         });
         
+        // --- Logika Sidebar Listener dan Responsivitas (Sama) ---
         function setupSidebarListeners(element) {
-            // Hapus kelas 'active' dari semua item kecuali yang baru diklik
             document.querySelectorAll('.chat-list-item').forEach(li => {
                  li.addEventListener('click', () => {
                      document.querySelectorAll('.chat-list-item').forEach(item => item.classList.remove('active'));
@@ -342,7 +439,6 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
                  });
             });
             
-            // Logika untuk pengalihan halaman
             (element ? [element] : document.querySelectorAll('.chat-list-item')).forEach(li => {
                 if (!element || !li.dataset.listenerAdded) {
                     li.addEventListener('click', (e) => {
@@ -372,7 +468,6 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
         }
         setupSidebarListeners();
 
-        // LOGIKA RESPONSIVITAS 
         document.addEventListener('DOMContentLoaded', () => {
             const menuToggle = document.getElementById('menu-toggle');
             const sidebar = document.getElementById('sidebar');
@@ -382,11 +477,9 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
                     sidebar.classList.toggle('open');
                 });
                 
-                // Tutup sidebar saat item chat/menu utama diklik
                 document.querySelectorAll('.chat-list-item, .main-menu-item a, .profile-btn, .logout-btn').forEach(item => {
                     item.addEventListener('click', () => {
                         if (window.innerWidth <= 768) {
-                            // Beri sedikit delay agar pengalihan halaman terjadi setelah sidebar tertutup
                             setTimeout(() => {
                                 sidebar.classList.remove('open');
                             }, 50);
