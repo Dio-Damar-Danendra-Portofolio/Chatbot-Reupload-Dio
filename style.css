@@ -1,0 +1,354 @@
+/* CSS DARI KODE ASLI ANDA, DIMODIFIKASI UNTUK SIDEBAR */
+body { 
+    font-family: Arial, sans-serif; 
+    background-color: #ffff00; 
+    min-height: 100vh;
+    margin: 0; 
+    color: #333; 
+    padding: 0; 
+    box-sizing: border-box;
+    display: flex; /* Layout utama menggunakan flex */
+}
+
+/* ---------------------------------------------------------------- */
+/* CSS untuk Sidebar */
+#sidebar {
+    width: 280px;
+    background-color: #343a40;
+    color: white;
+    padding: 0; /* Diubah: Dihapus padding 20px 0, padding dipindahkan ke dalam header/footer */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column; /* PENTING: Atur item agar tersusun vertikal */
+    overflow-y: hidden; /* PENTING: Matikan scroll utama di sidebar */
+    position: fixed;
+    height: 100%;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    transition: transform 0.3s ease-in-out; 
+}
+
+/* CSS untuk Konten Utama */
+.container, .main-content {
+    margin-left: 280px; /* Lebar sidebar */
+    width: 100%;
+    padding: 20px;
+    transition: margin-left 0.3s ease-in-out;
+}
+
+/* CSS BARU untuk Tombol Menu (Hamburger) */
+.menu-toggle {
+    display: none; /* Default tersembunyi */
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1001;
+    background: #343a40;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 24px;
+    cursor: pointer;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ... (CSS yang sudah ada) */
+
+/* MODIFIKASI CSS UNTUK INPUT FILE */
+#input-container {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    align-items: center; /* Tambahkan ini agar semua elemen sejajar vertikal */
+}
+
+#file-input {
+    /* Gaya untuk membuat input file lebih ringkas */
+    max-width: 150px; 
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    padding: 5px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+/* Styling untuk pratinjau file */
+#file-preview-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #343a40;
+}
+#clear-file {
+    font-weight: bold;
+}
+
+/* Styling untuk lampiran di dalam pesan user */
+.message.user .file-attachment {
+    border: 1px solid #a3cfb3;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    background-color: #f1fcf5;
+    max-width: 100%;
+}
+
+.message.user .file-attachment img,
+.message.user .file-attachment video {
+    max-height: 200px; /* Batasi tinggi pratinjau media */
+    width: auto;
+    display: block;
+}
+
+/* ... (Sisa CSS tetap sama) */
+
+.profile-picture-container {
+    text-align: center;
+    padding: 15px 0; 
+    margin-bottom: 10px; 
+    border-top: 1px solid #495057; 
+    border-bottom: 1px solid #495057; 
+}
+
+.profile-img {
+    width: 80px; 
+    height: 80px;
+    object-fit: cover; 
+    border-radius: 50%; 
+    border: 3px solid #ffc107; /* Warna border sesuai tema warning/kuning */
+}
+
+/* ---------------------------------------------------------------- */
+/* CSS BARU UNTUK UI "KELAS GURU" (MODIFIKASI GAMBAR REFERENSI) */
+/* Mengurangi padding di header agar lebih rapat ke atas */
+#sidebar .text-center {
+    padding: 15px 0 10px 0; 
+}
+
+/* Mengatur ulang font-size Judul Chatbot agar tidak terlalu besar di sidebar */
+#sidebar .text-center h1 {
+    font-size: 1.5rem; 
+    margin-bottom: 0;
+}
+
+/* Styling untuk Menu Utama (Beranda, Tugas, Materi) */
+.main-menu {
+    list-style: none;
+    padding: 0 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #495057; /* Garis pemisah sebelum Riwayat Chat */
+}
+
+.main-menu-item a {
+    display: block;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: background-color 0.15s;
+    margin-bottom: 5px;
+}
+
+.main-menu-item a:hover {
+    background-color: #495057;
+}
+
+/* ---------------------------------------------------------------- */
+/* KONTEN YANG BISA DISCROLL (DAFTAR CHAT) */
+.chat-list {
+    list-style: none;
+    padding: 0 0 10px 0; /* Padding vertikal di dalam scroll area */
+    margin: 0;
+    flex-grow: 1; /* PENTING: Memaksa elemen ini mengambil sisa ruang vertikal */
+    overflow-y: auto; /* PENTING: Hanya elemen ini yang boleh discroll */
+    overflow-x: hidden;
+}
+
+/* CSS untuk Footer Tombol (TETAP DI BAWAH) */
+.sidebar-footer {
+    padding: 10px 20px; 
+    background-color: #343a40; 
+    border-top: 1px solid #495057; 
+}
+
+/* Modifikasi tombol agar sesuai dengan Flexbox Footer */
+.profile-btn, .logout-btn {
+    display: block;
+    padding: 10px 0; 
+    text-decoration: none;
+    color: white;
+    background-color: #007bff;
+    text-align: center;
+    margin: 8px 0; 
+    border-radius: 5px;
+    transition: background-color 0.2s;
+    width: 100%;
+}
+.logout-btn {
+    background-color: #dc3545; /* Merah untuk Logout */
+}
+.profile-btn:hover {
+    background-color: #0056b3;
+    color: white;
+}
+.logout-btn:hover {
+    background-color: #c82333;
+    color: white;
+}
+
+
+/* CSS untuk Chat List (tidak berubah secara fungsional) */
+.chat-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid #495057;
+    transition: background-color 0.15s;
+    font-size: 0.9rem;
+}
+.chat-list-item:hover, .chat-list-item.active {
+    background-color: #495057;
+}
+.chat-list-text {
+    flex-grow: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.delete-chat-btn {
+    background: none;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    margin-left: 10px;
+    font-size: 0.8rem;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+.delete-chat-btn:hover {
+    opacity: 1;
+    color: #ff4d4d;
+}
+
+/* ---------------------------------------------------------------- */
+/* MEDIA QUERIES UNTUK RESPONSIVITAS */
+/* Tampilan Ponsel (Max-width 768px) */
+@media (max-width: 768px) {
+    
+    /* Tampilkan tombol menu */
+    .menu-toggle {
+        display: block;
+    }
+
+    /* Sembunyikan sidebar secara default pada tampilan kecil */
+    #sidebar {
+        transform: translateX(-100%); /* Geser ke kiri, keluar layar */
+    }
+
+    /* Kelas yang ditambahkan via JS saat menu dibuka */
+    #sidebar.open {
+        transform: translateX(0); /* Geser masuk */
+    }
+    
+    /* Geser konten utama ke kiri dan hapus margin */
+    .container, .main-content {
+        margin-left: 0; /* Hapus margin kiri */
+        padding: 1rem;
+    }
+    
+    /* Responsivitas Konten Chat Khusus (index.php) */
+    .container {
+        height: 80vh; 
+        padding: 1rem;
+    }
+    /* Tombol logout/profil tidak perlu diatur di sini karena sudah di dalam fixed footer sidebar */
+}
+/* ---------------------------------------------------------------- */
+
+
+/* CSS untuk Chat Window (index.php) */
+#chat-window {
+    height: 70vh; 
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+}
+
+#prompt-input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+}
+#send-button {
+    padding: 10px 20px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+#send-button:hover {
+    background-color: #0056b3;
+}
+.message {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    max-width: 80%;
+    word-wrap: break-word;
+    font-size: 0.95rem;
+}
+.message.user {
+    align-self: flex-end;
+    background-color: #d1e7dd; /* Hijau muda */
+    color: #0f5132;
+    border-top-right-radius: 0;
+    cursor: pointer; /* **PERUBAHAN BARU: Menunjukkan pesan dapat diedit** */
+}
+.message.gemini {
+    align-self: flex-start;
+    background-color: #f8d7da; /* Merah muda */
+    color: #842029;
+    border-top-left-radius: 0;
+}
+.message p:last-child {
+    margin-bottom: 0;
+}
+.typing-indicator {
+    display: inline-block;
+    width: 3px;
+    height: 3px;
+    background-color: #842029;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+    margin: 0 1px;
+}
+
+/* CSS KHUSUS UNTUK FORM (login.php, register.php) */
+.wrapper { width: 360px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+.wrapper h2 { text-align: center; color: #007bff; margin-bottom: 20px;}
+.form-group { margin-bottom: 15px; }
+.form-control { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; box-sizing: border-box; }
+.help-block { color: red; font-size: 0.9em; display: block; margin-top: 5px; }
+.btn-primary { 
+    width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;
+    transition: background-color 0.2s;
+}
+.btn-primary:hover { background-color: #0056b3; }
+p { text-align: center; margin-top: 15px; }
