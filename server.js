@@ -339,4 +339,5 @@ app.post('/chat/title', async (req, res) => {
 app.listen(port, () => {
     console.log(`Server Node.js berjalan di http://localhost:${port}`);
     console.log(`Model yang Digunakan untuk Chat: gemini-2.5-flash (Chat) & gemini-2.5-flash (Title)`);
-    console.log(`GEMINI_API_KEY yang digunakan: ${API_KEY ? API_
+    console.log(`GEMINI_API_KEY yang digunakan: ${API_KEY ? API_KEY.substring(0, 10) + '...' : 'TIDAK ADA'}`);
+});
