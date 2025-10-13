@@ -505,9 +505,11 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        message_id: messageId,
-                        chat_id: chatId,
+                        // PERBAIKAN PENTING: Pastikan kunci (key) menggunakan snake_case
+                        message_id: messageId, // Mengirim message_id
+                        chat_id: chatId,     // Mengirim chat_id
                         new_text: newText
+                        // fileData: fileData // Sertakan jika Anda menangani pengeditan file
                     })
                 });
 
@@ -524,12 +526,10 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         // Kirim ID pesan yang baru diedit sebagai messageIdToUpdate
-                        messageIdToUpdate: messageId, 
-                        chatId: chatId,
-                        // message dan fileData bisa dikirim kosong/null, 
-                        // karena server.js akan mengambil riwayat terbaru
+                        messageIdToUpdate: updateData.message_id_updated, 
+                        chatId: updateData.chat_id,
                         message: newText, 
-                        fileData: null 
+                        fileData: null
                     })
                 });
 
@@ -546,6 +546,8 @@ $profile_pic_filename = (isset($_SESSION["profile_picture"]) && !empty($_SESSION
             } catch (error) {
                 console.error("Error updating or regenerating chat:", error);
                 alert('Terjadi error saat mengedit prompt.');
+            } finally {
+                
             }
         }
 

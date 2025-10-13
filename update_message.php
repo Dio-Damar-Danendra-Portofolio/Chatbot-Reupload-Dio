@@ -1,6 +1,4 @@
 <?php
-// update_message.php
-// Pastikan sesi dimulai sebelum dipanggil
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -8,10 +6,9 @@ require_once 'config.php'; // config.php seharusnya sudah menginisialisasi $conn
 
 header('Content-Type: application/json');
 
-// Cek autentikasi menggunakan variabel yang ada di file Anda yang lain
+// Cek autentikasi
 if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
     http_response_code(401);
-    // Beri respons yang konsisten dengan pesan error yang diterima
     die(json_encode(['success' => false, 'error' => 'Unauthorized: User not logged in.'])); 
 }
 
@@ -22,20 +19,20 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$messageId = $data['message_id'] ?? null;
+// PERBAIKAN: Gunakan kunci yang konsisten (disarankan: snake_case: message_id, chat_id)
+$messageId = $data['message_id'] ?? null; 
 $chatId = $data['chat_id'] ?? null;
 $newText = $data['new_text'] ?? '';
-$fileData = $data['fileData'] ?? null; // Tambahkan jika ada fitur edit file
+$fileData = $data['fileData'] ?? null; 
 
+// PERBAIKAN: Pastikan kedua ID ada
 if (!$messageId || !$chatId) {
     http_response_code(400);
     die(json_encode(['success' => false, 'error' => 'Message ID or Chat ID is missing.']));
 }
 
-// Gunakan variabel user ID yang benar dari sesi
 $userId = $_SESSION["id"]; 
 
-// Menggunakan koneksi $conn (MySQLi) dari config.php
 if ($conn->connect_error) {
     http_response_code(500);
     die(json_encode(['success' => false, 'error' => 'Database connection failed.']));
@@ -45,6 +42,7 @@ try {
     $fileDataJson = $fileData ? json_encode($fileData) : null;
 
     // Kueri: Perbarui pesan user DAN verifikasi kepemilikan chat
+    // Memastikan user hanya bisa mengedit pesan miliknya sendiri di chat yang dimilikinya.
     $sql_update = "
         UPDATE messages m
         JOIN chats c ON m.chat_id = c.id
@@ -69,7 +67,8 @@ try {
                 'chat_id' => $chatId
             ]);
         } else {
-            http_response_code(403);
+            // Ini mungkin terjadi jika ID tidak valid, chat bukan milik user, atau tidak ada perubahan.
+            http_response_code(403); 
             echo json_encode(['success' => false, 'error' => 'No message found, access denied, or no changes made.']);
         }
         $stmt->close();
@@ -83,6 +82,4 @@ try {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Server error during update.']);
 }
-// Tidak perlu menutup $conn karena config.php mungkin tidak menutupnya,
-// dan file lain mungkin menggunakannya.
 ?>
