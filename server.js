@@ -4,9 +4,77 @@ import cors from 'cors';
 import { GoogleGenerativeAI } from '@google/generative-ai'; 
 import mysql from 'mysql2/promise'; 
 import { marked } from 'marked'; 
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const app = express();
 const port = 3000;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadDir = path.join(__dirname, 'uploads', 'chat_files');
+
+function ensureUploadDir() {
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+    }
+}
+
+function mimeToExtension(mimeType = '') {
+    const mime = (mimeType || '').toLowerCase();
+    if (mime.startsWith('image/')) {
+        if (mime.includes('png')) return '.png';
+        if (mime.includes('gif')) return '.gif';
+        if (mime.includes('webp')) return '.webp';
+        if (mime.includes('svg')) return '.svg';
+        return '.jpg';
+    }
+    if (mime.startsWith('application/')) {
+        if (mime.includes('pdf')) return '.pdf';
+        if (mime.includes('zip') || mime.includes('compressed')) return '.zip';
+        if (mime.includes('word') || mime.includes('doc')) return '.docx';
+        if (mime.includes('excel') || mime.includes('xls')) return '.xlsx';
+        if (mime.includes('powerpoint') || mime.includes('ppt')) return '.pptx';
+        if (mime.includes('json')) return '.json';
+        if (mime.includes('csv')) return '.csv';
+        return '.bin';
+    }
+    if (mime.startsWith('video/')) {
+        if (mime.includes('webm')) return '.webm';
+        if (mime.includes('avi')) return '.avi';
+        return '.mp4';
+    }
+    if (mime.startsWith('audio/')) {
+        if (mime.includes('wav')) return '.wav';
+        if (mime.includes('ogg')) return '.ogg';
+        if (mime.includes('aac')) return '.aac';
+        return '.mp3';
+    }
+    if (mime.startsWith('text/')) {
+        if (mime.includes('html')) return '.html';
+        if (mime.includes('css')) return '.css';
+        if (mime.includes('javascript') || mime.includes('js')) return '.js';
+        return '.txt';
+    }
+    return '.bin';
+}
+
+async function saveDataUriToFile(dataUri, mimeType) {
+    if (!dataUri) return null;
+    const base64Data = dataUri.split(',')[1];
+    if (!base64Data) {
+        throw new Error('Invalid Data URI');
+    }
+    ensureUploadDir();
+    const buffer = Buffer.from(base64Data, 'base64');
+    const extension = mimeToExtension(mimeType);
+    const uniqueName = `file_${Date.now()}_${Math.random().toString(36).slice(2)}${extension}`;
+    const absolutePath = path.join(uploadDir, uniqueName);
+    await fs.promises.writeFile(absolutePath, buffer);
+    const relativePath = path.join('uploads', 'chat_files', uniqueName).replace(/\\/g, '/');
+    return { absolutePath, relativePath };
+}
 
 // Middleware - Batas dinaikkan untuk transfer Data URI (gambar besar)
 app.use(express.json({ limit: '500mb' })); 
@@ -130,6 +198,7 @@ app.post('/chat', async (req, res) => {
         let geminiMessageId = null;
         let userMessageId = null;
         let newTitle = null;
+        let storedFilePath = null;
 
         connection = await pool.getConnection();
         await connection.beginTransaction();
@@ -144,10 +213,21 @@ app.post('/chat', async (req, res) => {
         }
 
         // 2. SIMPAN PESAN PENGGUNA (TERMASUK LAMPIRAN)
-        // file_path menyimpan Data URI untuk dirender di klien dan dikirim ke Gemini
+        if (fileDataUri && fileMimeType) {
+            try {
+                const savedFile = await saveDataUriToFile(fileDataUri, fileMimeType);
+                storedFilePath = savedFile ? savedFile.relativePath : null;
+            } catch (fileError) {
+                await connection.rollback();
+                connection.release();
+                console.error('Gagal menyimpan lampiran:', fileError);
+                return res.status(500).json({ error: 'Failed to store attachment on server.' });
+            }
+        }
+
         const [userResult] = await connection.execute(
             'INSERT INTO messages (chat_id, sender, message_text, file_path, file_mime_type) VALUES (?, ?, ?, ?, ?)',
-            [chatId, 'user', userMessage, fileDataUri || null, fileMimeType || null] 
+            [chatId, 'user', userMessage, storedFilePath, fileMimeType || null] 
         );
         userMessageId = userResult.insertId;
         
@@ -194,7 +274,9 @@ app.post('/chat', async (req, res) => {
                 messageId: geminiMessageId, 
                 newTitle: newTitle, 
                 chatId: chatId,
-                userMessageId: userMessageId 
+                userMessageId: userMessageId,
+                userFilePath: storedFilePath,
+                userFileMimeType: fileMimeType || null
             });
         } else {
             console.error("--- DEBUGGING GEMINI RESPONSE START ---");

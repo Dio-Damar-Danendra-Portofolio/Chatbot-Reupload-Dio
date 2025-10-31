@@ -1053,6 +1053,15 @@ $conn = null;
                     if (currentId) {
                         pendingMessageDiv.dataset.chatId = currentId;
                     }
+                    if (data.userFilePath !== undefined) {
+                        pendingMessageDiv.querySelectorAll('.message-attachment').forEach(node => node.remove());
+                        if (data.userFilePath) {
+                            const textNode = pendingMessageDiv.querySelector('.message-text-content');
+                            if (textNode) {
+                                textNode.insertAdjacentHTML('beforebegin', buildAttachmentHtml(data.userFilePath, data.userFileMimeType || ''));
+                            }
+                        }
+                    }
                 }
 
                 typingIndicator.remove();
