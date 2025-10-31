@@ -3,8 +3,23 @@
 session_start();
 
 require 'config.php'; 
-// Asumsi 'language.php' ada dan berisi fungsi get_texts()
-require 'toggle_lang.php'; 
+require_once 'language.php';
+
+if (!function_exists('slugify')) {
+    function slugify(string $text): string
+    {
+        $text = strtolower(trim($text));
+        if (function_exists('iconv')) {
+            $converted = iconv('UTF-8', 'ASCII//TRANSLIT', $text);
+            if ($converted !== false) {
+                $text = $converted;
+            }
+        }
+        $text = preg_replace('/[^a-z0-9]+/i', '-', $text);
+        $text = trim($text, '-');
+        return $text !== '' ? $text : 'chat';
+    }
+}
 
 // Cek autentikasi (Fitur User Login)
 if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
@@ -15,14 +30,18 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
 $userId = $_SESSION["id"];
 $username = $_SESSION["username"];
 $profile_picture = $_SESSION["profile_picture"] ?? null;
-$lang = $_SESSION['lang'] ?? 'id';
+if (!isset($_SESSION['lang'])) {
+    $_SESSION['lang'] = 'id';
+}
+$lang = $_SESSION['lang'];
 
 // Ambil teks lokalisasi
-// Asumsi get_texts() ada di language.php
 $texts = get_texts($lang); 
 
 // Ambil chat terbaru atau chat yang sedang aktif
 $currentChatId = $_GET['chat_id'] ?? null;
+$requestedSlug = isset($_GET['title']) ? strtolower(trim($_GET['title'])) : null;
+$current_chat_slug = null;
 $current_chat_title = $texts['new_chat_title'];
 $target_dir = "uploads/profile_pictures/"; 
 $profile_pic_path = (!empty($profile_picture) && file_exists($target_dir . $profile_picture)) 
@@ -42,10 +61,26 @@ try {
         $active_chat = $stmt_title->fetch();
         if ($active_chat) {
             $current_chat_title = $active_chat['title'];
+            $current_chat_slug = slugify($current_chat_title);
+            if ($requestedSlug !== $current_chat_slug) {
+                $redirectParams = http_build_query([
+                    'chat_id' => $currentChatId,
+                    'title' => $current_chat_slug
+                ]);
+                header("Location: index.php?{$redirectParams}");
+                exit;
+            }
         } else {
             // Chat tidak ditemukan atau bukan milik user, reset
             $currentChatId = null;
+            if ($requestedSlug !== null) {
+                header("Location: index.php");
+                exit;
+            }
         }
+    } elseif ($requestedSlug !== null) {
+        header("Location: index.php");
+        exit;
     }
 } catch (PDOException $e) {
     // Handle error database
@@ -512,7 +547,7 @@ $conn = null;
     </style>
 </head>
 <body>    
-    <button class="menu-toggle" id="menu-toggle">☰</button>
+    <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="sidebar">☰</button>
     <div id="sidebar">
         <div class="text-center sidebar-header">
             <a href="index.php" style="text-decoration: none;">
@@ -521,26 +556,27 @@ $conn = null;
         </div>
     
         <div class="profile-picture-container text-center">
-            <img src="<?= $profile_pic_path; ?>" alt="Foto Profil Pengguna" class="profile-img">
+            <img src="<?= $profile_pic_path; ?>" alt="<?= htmlspecialchars($texts['profile_picture_alt'] ?? 'Foto Profil Pengguna'); ?>" class="profile-img">
         </div>
     
         <ul class="main-menu">
             <li class="main-menu-item">
-                <a href="profile.php" class="profile-btn">Profil</a> 
+                <a href="profile.php" class="profile-btn"><?= htmlspecialchars($texts['profile_menu'] ?? 'Profil'); ?></a> 
             </li>
             <li class="main-menu-item">
-                <a href="logout.php" class="logout-btn">Keluar</a>  
+                <a href="logout.php" class="logout-btn"><?= htmlspecialchars($texts['logout_menu'] ?? 'Keluar'); ?></a>  
             </li>
         </ul>
     
         <ul class="chat-list">
-            <li class="chat-list-item <?= is_null($currentChatId) ? 'active' : ''; ?>" id="new-chat-btn" data-chat-id="null">
-                <b>➕ Mulai Chat Baru</b>
+            <li class="chat-list-item <?= is_null($currentChatId) ? 'active' : ''; ?>" id="new-chat-btn" data-chat-id="null" data-chat-slug="">
+                <b>➕ <?= htmlspecialchars($texts['new_chat_menu'] ?? 'Mulai Chat Baru'); ?></b>
             </li>
             
             <?php foreach ($chats as $chat_item): ?>
+            <?php $chat_slug = slugify($chat_item['title']); ?>
             <li class="chat-list-item <?= ($chat_item['id'] == $currentChatId) ? 'active' : ''; ?>" 
-                data-chat-id="<?= $chat_item['id']; ?>">
+                data-chat-id="<?= $chat_item['id']; ?>" data-chat-slug="<?= htmlspecialchars($chat_slug); ?>">
                 <div class="chat-list-text">
                     <?= htmlspecialchars($chat_item['title']); ?> 
                     <small style="color: #bbb; display: block;"><?= date("M j, H:i", strtotime($chat_item['created_at'])); ?></small>
@@ -553,12 +589,12 @@ $conn = null;
         </ul>
         <div class="p-3 border-top border-secondary sidebar-footer">
             <button class="btn btn-sm btn-outline-light w-100" onclick="toggleLanguage()">
-                <i class="bi bi-globe me-1"></i> ID / EN
+                <i class="bi bi-globe me-1"></i> <?= htmlspecialchars($texts['language_toggle'] ?? 'ID / EN'); ?>
             </button>
         </div>
     </div>
     <div class="main-content">
-        <button class="menu-toggle" id="menu-toggle">☰</button> 
+        <button type="button" class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="sidebar">☰</button> 
         
         <div class="chat-header">
             <h2 id="current-chat-title"><?= htmlspecialchars($current_chat_title); ?></h2>
@@ -611,6 +647,7 @@ $conn = null;
         const newChatTitleText = texts['new_chat_title'];
         const userId = document.getElementById('user-session-id').value;
         const chatContainer = document.getElementById('chat-container');
+        const baseIndexPath = 'index.php';
 
         // ---------------------------------------------------------------- //
         // FUNGSI HELPER
@@ -643,6 +680,64 @@ $conn = null;
                 reader.onerror = error => reject(error);
             });
         }
+
+        function generateSlug(text) {
+            if (!text) return 'chat';
+            const normalized = text
+                .toString()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+            return normalized || 'chat';
+        }
+
+        function updateUrl(chatId, title) {
+            let url = baseIndexPath;
+            if (chatId && chatId !== 'null') {
+                const params = new URLSearchParams();
+                params.set('chat_id', chatId);
+                params.set('title', generateSlug(title));
+                url += `?${params.toString()}`;
+            }
+            history.replaceState(null, '', url);
+        }
+
+        function updateSidebarSlug(chatId, title) {
+            if (!chatId || chatId === 'null') {
+                return;
+            }
+            const targetLi = document.querySelector(`.chat-list-item[data-chat-id="${chatId}"]`);
+            if (targetLi) {
+                targetLi.dataset.chatSlug = generateSlug(title);
+            }
+        }
+
+        /** Membuat HTML lampiran berdasarkan jalur atau Data URI */
+        function buildAttachmentHtml(filePath, mime = '') {
+            if (!filePath) return '';
+            const sanitizedMime = mime || '';
+            const isDataUri = filePath.startsWith('data:');
+            const isImage = sanitizedMime.startsWith('image/');
+            const href = isDataUri ? filePath : encodeURI(filePath);
+
+            if (isImage) {
+                return `<div class="message-attachment"><img src="${href}" alt="${texts['image_upload'] ?? 'Unggahan Gambar'}" loading="lazy"></div>`;
+            }
+
+            const linkLabel = texts['download_file'] ?? 'Lihat Berkas';
+            const fileIcon = isImage ? 'bi bi-image' : 'bi bi-file-earmark-text';
+            const downloadAttr = isDataUri ? '' : ' download';
+
+            return `
+                <div class="message-attachment file-box">
+                    <i class="${fileIcon}"></i>
+                    <a href="${href}" target="_blank" rel="noopener"${downloadAttr}>
+                        ${linkLabel}${sanitizedMime ? ` (${sanitizedMime})` : ''}
+                    </a>
+                </div>`;
+        }
         
         /** Menambahkan pesan ke container (Termasuk lampiran/multimodal) */
         function appendMessage(chatId, messageId, text, file, sender, originalUserMessageId = null) {
@@ -654,13 +749,8 @@ $conn = null;
             let htmlContent = '';
             
             // Tampilkan lampiran (Multimodal)
-            if (file && file.path && file.path.startsWith('data:')) {
-                const isImage = file.mime.startsWith('image/');
-                if (isImage) {
-                    htmlContent += `<div class="message-attachment"><img src="${file.path}" alt="${texts['image_upload'] ?? 'Unggahan Gambar'}" loading="lazy"></div>`;
-                } else {
-                    htmlContent += `<div class="message-attachment file-box"><i class="bi bi-file-earmark-text"></i> ${file.mime}</div>`;
-                }
+            if (file && file.path) {
+                htmlContent += buildAttachmentHtml(file.path, file.mime || '');
             }
             
             htmlContent += `<div class="message-text-content">${text}</div>`;
@@ -703,8 +793,12 @@ $conn = null;
         /** Memasuki mode sunting pesan */
         function enterEditMode(messageDiv) {
             const messageId = messageDiv.dataset.messageId;
+            if (messageId && messageId.startsWith('temp-id')) {
+                alert(texts['edit_pending_warning'] ?? 'Pesan ini masih diproses. Tunggu hingga selesai sebelum menyunting.');
+                return;
+            }
             const messageText = messageDiv.querySelector('.message-text-content').textContent; 
-            
+
             document.getElementById('message-input').value = messageText;
             document.getElementById('editing-message-id').value = messageId;
             document.getElementById('original-user-message-id').value = messageId; 
@@ -754,6 +848,7 @@ $conn = null;
                 document.querySelectorAll('.chat-list-item').forEach(item => item.classList.remove('active'));
                 document.getElementById('new-chat-btn')?.classList.add('active');
                 exitEditMode(); // Pastikan keluar dari mode edit
+                updateUrl(null, null);
                 return;
             }
             
@@ -777,6 +872,8 @@ $conn = null;
                         appendMessage(msg.chat_id, msg.id, msg.message_text, { path: msg.file_path, mime: msg.file_mime_type }, msg.sender);
                     });
                     scrollToBottom();
+                    updateSidebarSlug(id, data.title);
+                    updateUrl(id, data.title);
                 })
                 .catch(error => console.error('Gagal memuat pesan chat:', error));
         }
@@ -790,7 +887,7 @@ $conn = null;
             const fileData = fileInput.files[0];
             const editingMessageId = document.getElementById('editing-message-id').value;
             const isEditing = editingMessageId !== 'null';
-            const fileMimeType = null;
+            const fileMimeType = fileData ? fileData.type : null;
 
             if (!messageText && !fileData) return;
             
@@ -800,6 +897,7 @@ $conn = null;
             if (isEditing) {
                 const originalUserMessageId = document.getElementById('original-user-message-id').value;
                 try {
+                    const fileDataUriForEdit = fileData ? await fileToBase64(fileData) : null;
                     // 1. Panggil update_message.php untuk update teks dan hapus pesan Gemini setelahnya
                         const updateResponse = await fetch('api/update_message.php', {
                             method: 'POST',
@@ -808,10 +906,10 @@ $conn = null;
                             // 2. Kirim data sebagai string JSON yang valid
                             body: JSON.stringify({ 
                                 message_id: editingMessageId,
-                                new_message_text: messageText,
+                                new_text: messageText,
                                 chat_id: currentChatId, 
-                                fileData: fileData || null, // Data URI atau null
-                                file_mime_type: fileMimeType || null
+                                fileData: fileDataUriForEdit,
+                                file_mime_type: fileMimeType
                             })
                         });
 
@@ -833,6 +931,20 @@ $conn = null;
             // 2. Perbarui tampilan pesan yang diedit
             const editedMsgDiv = document.querySelector(`.message.user[data-message-id="${editingMessageId}"] .message-text-content`);
             if (editedMsgDiv) editedMsgDiv.innerHTML = messageText;
+            const parentMessageDiv = editedMsgDiv?.closest('.message.user');
+            if (parentMessageDiv && updateData.file_path !== undefined) {
+                parentMessageDiv.querySelectorAll('.message-attachment').forEach(node => node.remove());
+                if (updateData.file_path) {
+                    const attachmentHtml = buildAttachmentHtml(updateData.file_path, updateData.file_mime_type || '');
+                    if (attachmentHtml) {
+                        const textNode = parentMessageDiv.querySelector('.message-text-content');
+                        textNode.insertAdjacentHTML('beforebegin', attachmentHtml);
+                    }
+                }
+            }
+            if (parentMessageDiv && updateData.message_id_updated) {
+                parentMessageDiv.dataset.messageId = updateData.message_id_updated;
+            }
 
             // **LANGKAH PERBAIKAN KRITIS: PANGGIL ENDPOINT PENGHAPUSAN DB**
             const deleteResponse = await fetch('api/delete_subsequent_messages.php', {
@@ -880,7 +992,7 @@ $conn = null;
             // Buat objek file sementara untuk appendMessage
             const fileDisplay = fileData ? { path: fileData.path ? fileData.path : (await fileToBase64(fileData)), mime: fileData.type } : null;
             
-            appendMessage(currentChatId, tempMessageId, messageText, fileDisplay, 'user');
+            const tempMessageDiv = appendMessage(currentChatId, tempMessageId, messageText, fileDisplay, 'user');
             
             const fileDataUri = fileData ? await fileToBase64(fileData) : null;
 
@@ -889,13 +1001,13 @@ $conn = null;
             removeFilePreview(); // Hapus preview file setelah dikirim
             
             // 2. Kirim ke Gemini
-            await sendToGemini(currentChatId, messageText, fileData, fileDataUri, isCurrentlyNewChat, null);
+            await sendToGemini(currentChatId, messageText, fileData, fileDataUri, isCurrentlyNewChat, null, tempMessageDiv);
 
             document.getElementById('send-button').disabled = false;
         }
         
         /** Logika Pengiriman ke Node.js/Gemini */
-        async function sendToGemini(chatId, messageText, fileData, fileDataUri, isNewChat, originalUserMessageId) {
+        async function sendToGemini(chatId, messageText, fileData, fileDataUri, isNewChat, originalUserMessageId, pendingMessageDiv = null) {
             let currentId = chatId;
             const typingIndicator = appendTypingIndicator();
 
@@ -916,11 +1028,31 @@ $conn = null;
                 
                 const data = await response.json();
                 
+                if (!response.ok) {
+                    const serverError = data?.error || 'Server mengembalikan kesalahan.';
+                    throw new Error(serverError);
+                }
+                
+                if (!data?.text) {
+                    throw new Error('Respons AI tidak berisi teks.');
+                }
+                
                 // 2. Jika chat baru, perbarui ID dan Judul (Animasi Mengetik)
                 if (data.chatId !== currentId && (currentId === null || currentId === 'null')) {
                     currentChatId = data.chatId;
                     document.getElementById('current-chat-id').value = data.chatId;
+                    document.getElementById('is-new-chat-flag').value = 'false';
                     addChatToSidebar(data.chatId, newChatTitleText); 
+                }
+                currentId = data.chatId ?? currentId;
+
+                if (pendingMessageDiv) {
+                    if (data.userMessageId) {
+                        pendingMessageDiv.dataset.messageId = data.userMessageId;
+                    }
+                    if (currentId) {
+                        pendingMessageDiv.dataset.chatId = currentId;
+                    }
                 }
 
                 typingIndicator.remove();
@@ -937,6 +1069,12 @@ $conn = null;
                     if (sidebarTitleElement) {
                         sidebarTitleElement.innerHTML = `${data.newTitle} <small style="color: #bbb; display: block;">${new Date().toLocaleTimeString()}</small>`;
                     }
+                    updateSidebarSlug(currentChatId, data.newTitle);
+                    updateUrl(currentChatId, data.newTitle);
+                } else {
+                    const existingTitle = document.getElementById('current-chat-title').textContent;
+                    updateSidebarSlug(currentChatId, existingTitle);
+                    updateUrl(currentChatId, existingTitle);
                 }
                 
                 // 4. Tampilkan pesan Gemini
@@ -946,7 +1084,11 @@ $conn = null;
             } catch (error) {
                 console.error('Error saat berkomunikasi dengan Gemini:', error);
                 typingIndicator.remove();
-                appendMessage(currentChatId, 'error-id-' + Date.now(), texts['gemini_error'] ?? 'Terjadi kesalahan komunikasi dengan AI.', null, 'gemini');
+                if (pendingMessageDiv && pendingMessageDiv.dataset.messageId?.startsWith('temp-id-')) {
+                    pendingMessageDiv.remove();
+                }
+                const errorMessage = (texts['gemini_error'] ?? 'Terjadi kesalahan komunikasi dengan AI.') + (error?.message ? ` (${error.message})` : '');
+                appendMessage(currentChatId, 'error-id-' + Date.now(), errorMessage, null, 'gemini');
             }
         }
         
@@ -956,6 +1098,7 @@ $conn = null;
             const newChatLi = document.createElement('li');
             newChatLi.classList.add('chat-list-item', 'active');
             newChatLi.dataset.chatId = chatId;
+            newChatLi.dataset.chatSlug = generateSlug(title);
             newChatLi.innerHTML = `
                 <div class="chat-list-text">
                     ${title} 
@@ -1079,27 +1222,47 @@ $conn = null;
             setupSidebarListeners();
             if (currentChatId && currentChatId !== 'null') {
                 loadChatMessages(currentChatId);
+                const currentTitle = document.getElementById('current-chat-title').textContent || newChatTitleText;
+                updateSidebarSlug(currentChatId, currentTitle);
+                updateUrl(currentChatId, currentTitle);
+            } else {
+                updateUrl(null, null);
             }
         });
 
         // Logika responsif sidebar
-        const menuToggle = document.getElementById('menu-toggle');
+        const menuToggles = document.querySelectorAll('.menu-toggle');
         const sidebar = document.getElementById('sidebar');
 
-        if (menuToggle && sidebar) {
-            menuToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('open');
+        function toggleSidebar(forceState) {
+            const shouldOpen = typeof forceState === 'boolean'
+                ? forceState
+                : !sidebar.classList.contains('open');
+            sidebar.classList.toggle('open', shouldOpen);
+            menuToggles.forEach(btn => btn.setAttribute('aria-expanded', shouldOpen));
+        }
+
+        if (menuToggles.length && sidebar) {
+            menuToggles.forEach(toggle => {
+                toggle.addEventListener('click', () => toggleSidebar());
             });
             // Tutup sidebar saat item menu/chat diklik pada tampilan mobile
             document.querySelectorAll('.chat-list-item, .main-menu-item a').forEach(item => {
                 item.addEventListener('click', () => {
                     if (window.innerWidth <= 768) {
                         // Beri sedikit penundaan agar aksi (misalnya load chat) sempat dieksekusi
-                        setTimeout(() => {
-                            sidebar.classList.remove('open');
-                        }, 50);
+                        setTimeout(() => toggleSidebar(false), 50);
                     }
                 });
+            });
+            // Set state awal sesuai ukuran layar
+            toggleSidebar(window.innerWidth > 768);
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 768) {
+                    toggleSidebar(true);
+                } else if (!sidebar.classList.contains('open')) {
+                    toggleSidebar(false);
+                }
             });
         }
     </script>

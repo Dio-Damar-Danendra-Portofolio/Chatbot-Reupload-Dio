@@ -1,24 +1,28 @@
 <?php 
-    $title = "Edit Profil";
-    // Sertakan konfigurasi database dan mulai sesi
-    // Diasumsikan config.php membuat koneksi $conn (objek PDO)
-    require_once "config.php"; 
-    require_once "include/sidebar.php"; // Memastikan sidebar termuat
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
-    if (session_status() == PHP_SESSION_NONE) {
-        session_start();
-    }
+require_once "config.php"; 
+require_once "language.php";
 
-    // Cek autentikasi
-    if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
-        header("location: login.php");
-        exit;
-    }
-    
-    $user_id = $_SESSION['id'];
+if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
+    header("location: login.php");
+    exit;
+}
+
+if (!isset($_SESSION['lang'])) {
+    $_SESSION['lang'] = 'id';
+}
+$lang = $_SESSION['lang'];
+$texts = get_texts($lang);
+
+$title = $texts['edit_profile_title'] ?? 'Edit Profil';
+$user_id = $_SESSION['id'];
 
 $username = $email = $profile_picture = $phone_number = $created_at = "";
 $username_err = $email_err = $file_err = $phone_number_err = $success_msg = $error = "";
+$created_at_formatted = "";
 
 // Folder tujuan untuk file yang diunggah
 // Gunakan sub-folder agar rapi
@@ -44,12 +48,16 @@ try {
             $phone_number = $row["phone_number"];
             $profile_picture = $row["profile_picture"];
             $created_at = $row["created_at"];
+            if (!empty($created_at)) {
+                $timestamp = strtotime($created_at);
+                $created_at_formatted = $lang === 'en' ? date("F j, Y", $timestamp) : date("d F Y", $timestamp);
+            }
         } else {
-            $error = "Pengguna tidak ditemukan.";
+            $error = $texts['user_not_found'] ?? 'Pengguna tidak ditemukan.';
         }
     }
 } catch (PDOException $e) {
-    $error = "ERROR: Gagal mengambil data. " . $e->getMessage();
+    $error = ($texts['error_fetch_data'] ?? 'ERROR: Gagal mengambil data.') . ' ' . $e->getMessage();
 }
 
 // 2. Proses data POST saat form disubmit
@@ -108,14 +116,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     if (move_uploaded_file($_FILES["profile_picture_upload"]["tmp_name"], $target_file)) {
                         $new_profile_picture = $new_file_name; // Simpan nama file baru
                     } else {
-                        $file_err = "Maaf, terjadi kesalahan saat mengunggah berkas Anda.";
+                        $file_err = $texts['edit_profile_upload_error'] ?? 'Maaf, terjadi kesalahan saat mengunggah berkas Anda.';
                         $conn->rollBack();
-                        throw new Exception("File upload failed.");
+                        throw new Exception($file_err);
                     }
                 } else {
-                    $file_err = "Berkas yang diunggah bukan format gambar yang valid.";
+                    $file_err = $texts['edit_profile_invalid_file'] ?? 'Berkas yang diunggah bukan format gambar yang valid.';
                     $conn->rollBack();
-                    throw new Exception("Invalid file format.");
+                    throw new Exception($file_err);
                 }
             }
             
@@ -140,21 +148,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $username = $new_username; // Update variabel form
             $email = $new_email;
             $phone_number = $new_phone_number;
-            $success_msg = "Profil berhasil diperbarui!";
+            $success_msg = $texts['edit_profile_success'] ?? 'Profil berhasil diperbarui!';
 
         } catch (PDOException $e) {
             // Tangani error PDO
             if ($conn->inTransaction()) {
                 $conn->rollBack();
             }
-            $error = "ERROR: Terjadi kesalahan database saat memperbarui. " . $e->getMessage();
+            $error = ($texts['edit_profile_database_error'] ?? 'ERROR: Terjadi kesalahan database saat memperbarui.') . ' ' . $e->getMessage();
             error_log("Edit Profile PDO Error: " . $e->getMessage());
         } catch (Exception $e) {
             // Tangani error umum
             if ($conn->inTransaction()) {
                 $conn->rollBack();
             }
-            $error = "ERROR: " . $e->getMessage();
+            $error = ($texts['edit_profile_general_error'] ?? 'ERROR:') . ' ' . $e->getMessage();
             error_log("Edit Profile General Error: " . $e->getMessage());
         }
     }
@@ -162,10 +170,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 $conn = null; // Tutup koneksi PDO
 ?>
 <!DOCTYPE html>
-<html lang="">
+<html lang="<?= htmlspecialchars($lang); ?>">
 <head>
     <meta charset="UTF-8">
-    <title><?= $title; ?></title>
+    <title><?= htmlspecialchars($title); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="style.css"> 
@@ -173,14 +181,14 @@ $conn = null; // Tutup koneksi PDO
 </head>
 <body class="d-flex bg-light">
 
-    <?php include 'include/sidebar.php'; // Sertakan sidebar ?>
+    <?php include 'include/sidebar.php'; ?>
     
     <div class="main-content flex-grow-1 p-3 p-md-5">
-        <h1 class="mb-4 fw-bold text-center"><?= $title; ?></h1>
+        <h1 class="mb-4 fw-bold text-center"><?= htmlspecialchars($title); ?></h1>
 
         <div class="card shadow-sm mx-auto" style="max-width: 600px;">
             <div class="card-header bg-primary text-center text-white">
-                Informasi Profil
+                <?= htmlspecialchars($texts['edit_profile_info_heading'] ?? 'Informasi Profil'); ?>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -207,37 +215,39 @@ $conn = null; // Tutup koneksi PDO
                                                 ? $target_dir . htmlspecialchars($profile_picture) 
                                                 : 'assets/default_profile.png'; 
                         ?>
-                        <img src="<?= $profile_pic_path; ?>" alt="Foto Profil Saat Ini" class="rounded-circle border border-3 border-secondary mb-3" style="width: 120px; height: 120px; object-fit: cover;">
-                        <p class="text-muted small">Bergabung Sejak: <?= date("d F Y", strtotime($created_at)); ?></p>
+                        <img src="<?= $profile_pic_path; ?>" alt="<?= htmlspecialchars($texts['profile_picture_alt'] ?? 'Foto Profil Pengguna'); ?>" class="rounded-circle border border-3 border-secondary mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                        <?php if (!empty($created_at_formatted)): ?>
+                            <p class="text-muted small"><?= htmlspecialchars($texts['edit_profile_joined_since'] ?? 'Bergabung Sejak'); ?>: <?= htmlspecialchars($created_at_formatted); ?></p>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <div class="row mt-2">
                     <div class="col-lg-6 mt-2">
-                        <label for="username" class="form-label fw-bold">Nama Pengguna</label>
+                        <label for="username" class="form-label fw-bold"><?= htmlspecialchars($texts['profile_username_label'] ?? 'Nama Pengguna'); ?></label>
                         <input type="text" name="username" id="username" class="form-control <?= (!empty($username_err)) ? 'is-invalid' : ''; ?>" value="<?= htmlspecialchars($username); ?>">
                         <div class="invalid-feedback"><?= $username_err; ?></div>
                     </div>
                     <div class="col-lg-6 mt-2">
-                        <label for="email" class="form-label fw-bold">Email</label>
+                        <label for="email" class="form-label fw-bold"><?= htmlspecialchars($texts['profile_email_label'] ?? 'Email'); ?></label>
                         <input type="email" name="email" id="email" class="form-control <?= (!empty($email_err)) ? 'is-invalid' : ''; ?>" value="<?= htmlspecialchars($email); ?>">
                         <div class="invalid-feedback"><?= $email_err; ?></div>
                     </div>
                 </div>
                <div class="row">
                     <div class="col-lg-6 mt-2">
-                        <label for="phone_number" class="form-label fw-bold">Nomor Telepon</label>
+                        <label for="phone_number" class="form-label fw-bold"><?= htmlspecialchars($texts['profile_phone_label'] ?? 'Nomor Telepon'); ?></label>
                         <input type="text" name="phone_number" id="phone_number" class="form-control <?= (!empty($phone_number_err)) ? 'is-invalid' : ''; ?>" value="<?= htmlspecialchars($phone_number); ?>">
                         <div class="invalid-feedback"><?= $phone_number_err; ?></div>
                     </div>
                     <div class="col-lg-6 mt-2">
-                        <label for="profile_picture_upload" class="form-label d-block fw-bold">Ubah Foto Profil</label>
+                        <label for="profile_picture_upload" class="form-label d-block fw-bold"><?= htmlspecialchars($texts['edit_profile_change_photo'] ?? 'Ubah Foto Profil'); ?></label>
                         <input type="file" name="profile_picture_upload" id="profile_picture_upload" class="form-control">
                         
                         <?php if (!empty($profile_picture)): ?>
                             <div class="form-check mt-2">
                                 <input class="form-check-input" type="checkbox" name="delete_current_pic" id="delete_current_pic">
                                 <label class="form-check-label" for="delete_current_pic">
-                                    Hapus Foto Profil Saat Ini
+                                    <?= htmlspecialchars($texts['edit_profile_delete_photo'] ?? 'Hapus Foto Profil Saat Ini'); ?>
                                 </label>
                             </div>
                         <?php endif; ?>
@@ -247,10 +257,10 @@ $conn = null; // Tutup koneksi PDO
             <div class="card-footer bg-white">
                     <div class="row">
                         <div class="col-lg-6 d-grid gap-2 mb-2 mb-md-0">
-                            <a href="profile.php" class="btn btn-secondary">Batalkan Perubahan</a>
+                            <a href="profile.php" class="btn btn-secondary"><?= htmlspecialchars($texts['edit_profile_cancel'] ?? 'Batalkan Perubahan'); ?></a>
                         </div>
                         <div class="col-lg-6 d-grid gap-2">
-                            <input type="submit" class="btn btn-success" value="Simpan Perubahan">
+                            <input type="submit" class="btn btn-success" value="<?= htmlspecialchars($texts['edit_profile_save'] ?? 'Simpan Perubahan'); ?>">
                         </div>
                     </div>
                 </div>        

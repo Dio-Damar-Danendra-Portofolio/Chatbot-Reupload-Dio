@@ -24,13 +24,15 @@ $data = json_decode(file_get_contents("php://input"), true);
 // Pastikan variabel dideklarasikan untuk menghindari error
 $messageId = $data['message_id'] ?? null; 
 $chatId = $data['chat_id'] ?? null;
-$newText = $data['new_text'] ?? '';
+$hasNewTextKey = array_key_exists('new_text', $data);
+$newText = $hasNewTextKey ? ($data['new_text'] ?? '') : '';
 $fileData = $data['fileData'] ?? null; // Data URI string (atau null/empty string jika file dihapus/tidak ada)
 $fileMimeTypeFromInput = $data['file_mime_type'] ?? null; // Tipe MIME dari input
 
 $userId = $_SESSION["id"]; 
 $filePathToDB = null; // Jalur file yang akan disimpan di database (dapat diakses browser: e.g. uploads/chat_files/...)
 $fileMimeTypeToDB = null; // Tipe MIME yang akan disimpan di database
+$upload_public_path = 'uploads/chat_files/';
 
 /**
  * Mendapatkan ekstensi file yang sesuai dari tipe MIME.
@@ -163,10 +165,24 @@ try {
         die(json_encode(['success' => false, 'error' => 'Pesan tidak ditemukan atau akses ditolak.'])); 
     }
 
+    $sql_current = "SELECT message_text, file_path, file_mime_type FROM messages WHERE id = ? AND chat_id = ? LIMIT 1";
+    $stmt_current = $conn->prepare($sql_current);
+    $stmt_current->execute([$messageId, $chatId]);
+    $currentMessage = $stmt_current->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    if (!$hasNewTextKey) {
+        $newText = $currentMessage['message_text'] ?? '';
+    }
+
+    if ($filePathToDB === null) {
+        $filePathToDB = $currentMessage['file_path'] ?? null;
+        $fileMimeTypeToDB = $currentMessage['file_mime_type'] ?? null;
+    }
+
     // 3. Siapkan SQL UPDATE
     $sql_update = "UPDATE messages SET message_text = ?, file_path = ?, file_mime_type = ? WHERE id = ? AND chat_id = ? AND sender = 'user'";
     $stmt = $conn->prepare($sql_update);
-    
+
     // 4. Eksekusi Statement
     $success = $stmt->execute([
         $newText, 

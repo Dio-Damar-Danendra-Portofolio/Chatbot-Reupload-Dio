@@ -1,7 +1,16 @@
 <?php
-// Pastikan config.php sudah membuat koneksi $conn (mysqli) dan memulai sesi
 require_once 'config.php';
-session_start();
+require_once 'language.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['lang'])) {
+    $_SESSION['lang'] = 'id';
+}
+$lang = $_SESSION['lang'];
+$texts = get_texts($lang);
 // Cek apakah user sudah login, jika ya, redirect ke index.php
 if (isset($_SESSION["loggedin"]) && $_SESSION["loggedin"] === true) {
     header("location: index.php");
@@ -16,14 +25,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Validasi EMAIL
     if (empty(trim($_POST["email"]))) {
-        $email_err = "Masukkan alamat email.";
+        $email_err = $texts['login_error_email_required'] ?? 'Masukkan alamat email.';
     } else {
         $email = trim($_POST["email"]);
     }
     
     // Validasi Password
     if (empty(trim($_POST["password"]))) {
-        $password_err = "Masukkan password.";
+        $password_err = $texts['login_error_password_required'] ?? 'Masukkan password.';
     } else {
         $password = trim($_POST["password"]);
     }
@@ -59,19 +68,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             header("location: index.php");
                             exit;
                         } else {
-                            $login_err = "Email atau password salah.";
+                            $login_err = $texts['login_error_invalid'] ?? 'Email atau password salah.';
                         }
                     }
                 } else {
-                    $login_err = "Email atau password salah.";
+                    $login_err = $texts['login_error_invalid'] ?? 'Email atau password salah.';
                 }
             } else {
-                 $login_err = "Terjadi kesalahan saat mengeksekusi query.";
+                 $login_err = $texts['login_error_query'] ?? 'Terjadi kesalahan saat mengeksekusi query.';
             }
             unset($stmt); // PDO: Menutup statement
         } else {
             $error_info = $conn->errorInfo();
-            $login_err = "Gagal mempersiapkan query: " . $error_info[2];        }
+            $login_err = ($texts['login_error_prepare'] ?? 'Gagal mempersiapkan query:') . ' ' . $error_info[2];        }
     }
     
     // Tutup koneksi $conn (mysqli)
@@ -80,10 +89,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars($lang); ?>">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Dio Damar's Chatbot</title>
+    <title><?= htmlspecialchars($texts['login_page_title'] ?? "Login - Dio's Chatbot"); ?></title>
     <style>
         /* CSS KHUSUS UNTUK FORM (Sama seperti register.php) */
         body { background-color: #00b0ff; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }
@@ -105,28 +114,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="wrapper">
-        <h2>Login Akun</h2>
+        <div class="text-end mb-2">
+            <?php $redirectParam = htmlspecialchars(rawurlencode($_SERVER['REQUEST_URI'] ?? 'login.php')); ?>
+            <a class="btn btn-sm btn-outline-primary" href="toggle_lang.php?redirect=<?= $redirectParam; ?>"><?= htmlspecialchars($texts['language_toggle'] ?? 'ID / EN'); ?></a>
+        </div>
+        <h2><?= htmlspecialchars($texts['login_heading'] ?? 'Login Akun'); ?></h2>
         <?php 
         if (!empty($login_err)) {
-            echo '<div class="alert alert-danger" style="color: red; text-align: center; margin-bottom: 15px;">' . $login_err . '</div>';
+            echo '<div class="alert alert-danger" style="color: red; text-align: center; margin-bottom: 15px;">' . htmlspecialchars($login_err) . '</div>';
         }       
         ?>
 
         <form action="<?= htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST">
             <div class="form-group <?= (!empty($email_err)) ? 'has-error' : ''; ?>"> 
-                <label class="form-label fw-bold">Email</label> 
+                <label class="form-label fw-bold"><?= htmlspecialchars($texts['login_email_label'] ?? 'Email'); ?></label> 
                 <input type="text" name="email" class="form-control" value="<?= htmlspecialchars($email); ?>"> 
-                <span class="help-block"><?= $email_err; ?></span> 
+                <span class="help-block"><?= htmlspecialchars($email_err); ?></span> 
             </div>  
             <div class="form-group <?= (!empty($password_err)) ? 'has-error' : ''; ?>">
-                <label class="form-label fw-bold">Password</label>
+                <label class="form-label fw-bold"><?= htmlspecialchars($texts['login_password_label'] ?? 'Password'); ?></label>
                 <input type="password" name="password" class="form-control">
-                <span class="help-block"><?= $password_err; ?></span>
+                <span class="help-block"><?= htmlspecialchars($password_err); ?></span>
             </div>
             <div class="form-group">
-                <input type="submit" class="btn-primary" value="Login">
+                <input type="submit" class="btn-primary" value="<?= htmlspecialchars($texts['login_submit'] ?? 'Login'); ?>">
             </div>
-            <p>Belum punya akun? <a href="register.php">Daftar sekarang</a>.</p>
+            <p><?= htmlspecialchars($texts['login_prompt'] ?? 'Belum punya akun?'); ?> <a href="register.php"><?= htmlspecialchars($texts['login_prompt_link_text'] ?? 'Daftar sekarang'); ?></a>.</p>
         </form>
     </div>
 </body>

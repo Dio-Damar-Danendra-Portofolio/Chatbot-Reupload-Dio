@@ -1,6 +1,6 @@
 <?php 
-// Pastikan sesi sudah dimulai dan user terotentikasi. 
-require_once "config.php"; // Memuat koneksi $conn (PDO object)
+require_once "config.php"; 
+require_once "language.php";
 
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
@@ -11,13 +11,19 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
     exit;
 }
 
-$title = "Ganti Password";
+if (!isset($_SESSION['lang'])) {
+    $_SESSION['lang'] = 'id';
+}
+$lang = $_SESSION['lang'];
+$texts = get_texts($lang);
+
+$title = $texts['update_password_title'] ?? 'Ganti Kata Sandi';
 $old_password_err = $new_password_err = $confirm_password_err = $update_success = $error_msg = "";
 
 $user_id = $_SESSION['id'];
-$profile_picture = null; // Diperlukan untuk sidebar.php
+$profile_picture = $_SESSION['profile_picture'] ?? null;
 $hashed_password = null; 
-$target_dir = "uploads/profile_pictures/"; // Asumsi path folder gambar profil
+$target_dir = "uploads/profile_pictures/";
 
 // 1. PENGAMBILAN DATA PENGGUNA DAN PASSWORD SAAT INI (Konversi ke PDO)
 $sql_user = "SELECT profile_picture, password FROM users WHERE id = ?";
@@ -31,11 +37,11 @@ try {
             $profile_picture = $row_user['profile_picture']; 
             $hashed_password = $row_user['password']; // Ambil hash password dari DB
         } else {
-            $error_msg = "Pengguna tidak ditemukan.";
+            $error_msg = $texts['user_not_found'] ?? 'Pengguna tidak ditemukan.';
         }
     }
 } catch (PDOException $e) {
-    $error_msg = "ERROR Database: Gagal mengambil data pengguna. " . $e->getMessage();
+    $error_msg = ($texts['update_password_error_db_fetch'] ?? 'ERROR Database: Gagal mengambil data pengguna.') . ' ' . $e->getMessage();
 }
 
 
@@ -46,23 +52,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["simpan"])) {
     
     // 1. Verifikasi Password Lama
     if (empty($old)) {
-        $old_password_err = "Mohon masukkan kata sandi lama Anda.";
+        $old_password_err = $texts['update_password_error_old_required'] ?? 'Mohon masukkan kata sandi lama Anda.';
     } elseif (!password_verify($old, $hashed_password)) {
-        $old_password_err = "Kata sandi lama salah.";
+        $old_password_err = $texts['update_password_error_old_incorrect'] ?? 'Kata sandi lama salah.';
     }
 
     // 2. Validasi Password Baru
     if (empty($new)) {
-        $new_password_err = "Mohon masukkan kata sandi baru.";
+        $new_password_err = $texts['update_password_error_new_required'] ?? 'Mohon masukkan kata sandi baru.';
     } elseif (strlen($new) < 6) {
-        $new_password_err = "Kata sandi harus memiliki minimal 6 karakter.";
+        $new_password_err = $texts['update_password_error_new_length'] ?? 'Kata sandi harus memiliki minimal 6 karakter.';
     }
 
     // 3. Konfirmasi Password Baru
     if (empty($confirm)) {
-        $confirm_password_err = "Mohon konfirmasi kata sandi baru.";
+        $confirm_password_err = $texts['update_password_error_confirm_required'] ?? 'Mohon konfirmasi kata sandi baru.';
     } elseif ($new !== $confirm) {
-        $confirm_password_err = "Konfirmasi kata sandi tidak cocok dengan kata sandi baru.";
+        $confirm_password_err = $texts['update_password_error_confirm_mismatch'] ?? 'Konfirmasi kata sandi tidak cocok dengan kata sandi baru.';
     }
 
     // 4. Jika tidak ada error, lakukan pembaruan
@@ -79,38 +85,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["simpan"])) {
                 
                 // PDO: Gunakan rowCount()
                 if ($stmt_update->rowCount() > 0) {
-                    $update_success = "Kata sandi berhasil diperbarui.";
+                    $update_success = $texts['update_password_success'] ?? 'Kata sandi berhasil diperbarui.';
                 } else {
-                    $error_msg = "Tidak ada perubahan yang dilakukan pada kata sandi (atau kata sandi baru sama dengan yang lama).";
+                    $error_msg = $texts['update_password_no_change'] ?? 'Tidak ada perubahan yang dilakukan pada kata sandi.';
                 }
             }
         } catch (PDOException $e) {
-            $error_msg = "ERROR Database: Gagal memperbarui kata sandi. " . $e->getMessage();
+            $error_msg = ($texts['update_password_error_db_update'] ?? 'ERROR Database: Gagal memperbarui kata sandi.') . ' ' . $e->getMessage();
         }
     }
 }
 
 $conn = null; // Tutup koneksi PDO
-require_once "include/sidebar.php"; // Memuat sidebar (jika diperlukan)
 ?>
 
 <!DOCTYPE html>
-<html lang="id">
+<html lang="<?= htmlspecialchars($lang); ?>">
     <head>
         <meta charset="UTF-8">
-        <title><?= $title; ?></title>
+        <title><?= htmlspecialchars($title); ?></title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
         <link rel="stylesheet" href="style.css"> 
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body class="d-flex bg-light">
-    <!-- <?php include 'include/sidebar.php'; // Sertakan sidebar untuk konsistensi UI ?> -->
+    <?php include 'include/sidebar.php'; ?>
         <div class="main-content flex-grow-1 p-3 p-md-5">
-            <h1 class="mb-4 fw-bold text-center"><?= $title; ?></h1>
+            <h1 class="mb-4 fw-bold text-center"><?= htmlspecialchars($title); ?></h1>
 
             <div class="card shadow-sm mx-auto" style="max-width: 600px;">
                 <div class="card-header bg-primary text-white">
-                    Ganti Kata Sandi
+                    <?= htmlspecialchars($texts['update_password_heading'] ?? 'Ganti Kata Sandi'); ?>
                 </div>
                 <form action="<?= htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
                     <div class="card-body">
@@ -125,19 +130,19 @@ require_once "include/sidebar.php"; // Memuat sidebar (jika diperlukan)
                         ?>
 
                         <div class="mb-3">
-                            <label for="old_password" class="form-label">Kata Sandi Lama</label>
+                            <label for="old_password" class="form-label"><?= htmlspecialchars($texts['update_password_old_label'] ?? 'Kata Sandi Lama'); ?></label>
                             <input type="password" name="old_password" id="old_password" class="form-control <?= (!empty($old_password_err)) ? 'is-invalid' : ''; ?>">
                             <div class="invalid-feedback"><?= $old_password_err; ?></div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="new_password" class="form-label">Kata Sandi Baru</label>
+                            <label for="new_password" class="form-label"><?= htmlspecialchars($texts['update_password_new_label'] ?? 'Kata Sandi Baru'); ?></label>
                             <input type="password" name="new_password" id="new_password" class="form-control <?= (!empty($new_password_err)) ? 'is-invalid' : ''; ?>">
                             <div class="invalid-feedback"><?= $new_password_err; ?></div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="new_password_confirmation" class="form-label">Konfirmasi Kata Sandi Baru</label>
+                            <label for="new_password_confirmation" class="form-label"><?= htmlspecialchars($texts['update_password_confirm_label'] ?? 'Konfirmasi Kata Sandi Baru'); ?></label>
                             <input type="password" name="new_password_confirmation" id="new_password_confirmation" class="form-control <?= (!empty($confirm_password_err)) ? 'is-invalid' : ''; ?>">
                             <div class="invalid-feedback"><?= $confirm_password_err; ?></div>
                         </div>
@@ -146,10 +151,10 @@ require_once "include/sidebar.php"; // Memuat sidebar (jika diperlukan)
                     <div class="card-footer bg-light">
                         <div class="row">
                             <div class="col-md-6 d-grid gap-2 mb-2 mb-md-0">
-                                <a href="profile.php" class="btn btn-secondary">Batalkan Perubahan</a>
+                                <a href="profile.php" class="btn btn-secondary"><?= htmlspecialchars($texts['update_password_cancel'] ?? 'Batalkan Perubahan'); ?></a>
                             </div>
                             <div class="col-md-6 d-grid gap-2">
-                                <button type="submit" class="btn btn-success" name="simpan">Simpan Perubahan</button>
+                                <button type="submit" class="btn btn-success" name="simpan"><?= htmlspecialchars($texts['update_password_save'] ?? 'Simpan Perubahan'); ?></button>
                             </div>
                         </div>
                     </div>
